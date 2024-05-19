@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  dev-database:
+    image: postgres
+    container_name: dev-database
+    ports:
+      - 5434:5432
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: milohuynh
+      POSTGRES_DB: demo1db
+    networks:
+      - nestjs-network
+networks:
+  nestjs-network:
