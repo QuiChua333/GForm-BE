@@ -13,7 +13,7 @@ const sendMail = async ({
 }: MailObjectInterface) => {
   try {
     const transporter = nodemailer.createTransport({
-      secure: true,
+      secure: false,
       host: 'smtp@gmail.com',
       port: 587,
       service: 'gmail',
