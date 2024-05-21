@@ -7,11 +7,9 @@ import {
   Post,
   Res,
 } from '@nestjs/common';
-import { RegisterUserDTO } from './DTO';
+import { RegisterUserDTO, SigninUserDTO } from './DTO';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
-import { sendMail } from 'src/utils/mailer';
-import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
@@ -20,11 +18,35 @@ export class AuthController {
   @Post('register')
   async register(@Body() body: RegisterUserDTO, @Res() res: Response) {
     try {
-      const user = await this.authService.register(body);
+      const tokenLinkPublic = await this.authService.register(body);
 
       res.status(HttpStatus.CREATED).json({
-        message: 'Sign in successfully',
-        data: user,
+        message: 'Đăng ký tài khoản thành công',
+        data: tokenLinkPublic,
+      });
+    } catch (error) {
+      console.log(error);
+      if (error.code === '23505') {
+        res.status(HttpStatus.CONFLICT).json({
+          message: 'Email đã tồn tại',
+        });
+        return;
+      }
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Get('verifyEmailPublicLink/:tokenLinkPublic')
+  async verifyEmailPublicLink(
+    @Param('tokenLinkPublic') tokenLinkPublic: string,
+    @Res() res: Response,
+  ) {
+    try {
+      await this.authService.verifyEmail(tokenLinkPublic);
+      res.status(HttpStatus.ACCEPTED).json({
+        message: 'Liên kết còn thời hạn',
       });
     } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json({
@@ -40,10 +62,24 @@ export class AuthController {
     try {
       await this.authService.verifyEmail(tokenLink);
       res.status(HttpStatus.ACCEPTED).json({
-        message: 'Verify successfully',
+        message: 'Xác minh email thành công',
       });
     } catch (error) {
-      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Post('signin')
+  async signIn(@Body() body: SigninUserDTO, @Res() res: Response) {
+    try {
+      const user = await this.authService.signIn(body);
+      res.status(HttpStatus.OK).json({
+        message: 'Đăng nhập thành công',
+        data: user,
+      });
+    } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json({
         message: error.message,
       });

@@ -41,6 +41,17 @@ export class AuthService {
         expiresIn: this.configService.get('EXPIRED_JWT_LINK_EMAIL'),
       },
     );
+    const tokenLinkPublic = await this.jwtService.signAsync(
+      {
+        email: user.email,
+        id: user.id,
+        public: 'public',
+      },
+      {
+        secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
+        expiresIn: this.configService.get('EXPIRED_JWT_LINK_EMAIL'),
+      },
+    );
 
     const link = `${this.configService.get('FE_URL')}/email-verification-result/${tokenLink}`;
     const templateHTMLEmail = emailVerification(link);
@@ -50,10 +61,27 @@ export class AuthService {
       html: templateHTMLEmail,
       mailService: this.mailService,
     });
-    console.log(link);
-
-    return user;
+    return tokenLinkPublic;
   }
+
+  async verifyEmailPublicLink(tokenLinkPublic: string) {
+    const payload = await this.jwtService.verifyAsync(tokenLinkPublic, {
+      secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
+    });
+  }
+  async verifyEmail(tokenLink: string) {
+    const payload = await this.jwtService.verifyAsync(tokenLink, {
+      secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
+    });
+    const user = await this.userRepository.findOne({
+      where: {
+        id: payload.id,
+      },
+    });
+    user.isVerifiedEmail = true;
+    await this.userRepository.save(user);
+  }
+
   async signIn(authDTO: SigninUserDTO) {
     const user = await this.userRepository.findOne({
       where: {
@@ -61,11 +89,11 @@ export class AuthService {
       },
     });
     if (!user) {
-      throw new ForbiddenException('Tài khoản không tồn tại');
+      throw new Error('Sai tài khoản hoặc mật khẩu');
     }
     const passwordMatched = await argon.verify(user.password, authDTO.password);
     if (!passwordMatched) {
-      throw new ForbiddenException('Sai mật khẩu');
+      throw new Error('Sai tài khoản hoặc mật khẩu');
     }
     const payload = { id: user.id, email: user.email };
     const { accessToken, refreshToken } = await this.generateToken(payload);
@@ -93,26 +121,5 @@ export class AuthService {
       },
     );
     return { accessToken, refreshToken };
-  }
-
-  async verifyEmail(tokenLink: string) {
-    try {
-      const payload = await this.jwtService.verifyAsync(tokenLink, {
-        secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
-      });
-      console.log(payload);
-      const user = await this.userRepository.findOne({
-        where: {
-          id: payload.id,
-        },
-      });
-      user.isVerifiedEmail = true;
-      await this.userRepository.save(user);
-    } catch (error) {
-      if (error.code === '23505') {
-        throw new Error('Email đã tồn tại');
-      }
-      throw new Error(error.message);
-    }
   }
 }
