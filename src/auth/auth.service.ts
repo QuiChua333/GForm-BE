@@ -5,12 +5,19 @@ import { User } from 'src/user/Entity/user.entity';
 import { Repository } from 'typeorm';
 import * as argon from 'argon2';
 import { JwtService } from '@nestjs/jwt';
+import { sendMail } from 'src/utils/mailer';
+import { MailerService } from '@nestjs-modules/mailer';
+import emailVerification from 'src/utils/mailer/html_templates/emailVerification';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    private readonly mailService: MailerService,
+
     private jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(registerDTO: RegisterUserDTO) {
@@ -23,6 +30,27 @@ export class AuthService {
     });
     delete user.password;
     delete user.refreshToken;
+    // Gửi liên kết xác thực email
+    const tokenLink = await this.jwtService.signAsync(
+      {
+        email: user.email,
+        id: user.id,
+      },
+      {
+        secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
+        expiresIn: this.configService.get('EXPIRED_JWT_LINK_EMAIL'),
+      },
+    );
+
+    const link = `${this.configService.get('FE_URL')}/email-verification-result/${tokenLink}`;
+    const templateHTMLEmail = emailVerification(link);
+    await sendMail({
+      email: user.email,
+      subject: 'Xác minh email',
+      html: templateHTMLEmail,
+      mailService: this.mailService,
+    });
+    console.log(link);
 
     return user;
   }
@@ -43,17 +71,18 @@ export class AuthService {
     const { accessToken, refreshToken } = await this.generateToken(payload);
     delete user.password;
     delete user.refreshToken;
+
     return {
       ...user,
       accessToken,
       refreshToken,
     };
   }
-  private async generateToken(payload: { id: string; email: string }) {
+  async generateToken(payload: { id: string; email: string }) {
     const accessToken = await this.jwtService.signAsync(payload);
     const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_SECRET_REFRESH_TOKEN,
-      expiresIn: process.env.EXPIRED_JWT_REFRESH_TOKEN,
+      secret: this.configService.get('JWT_SECRET_REFRESH_TOKEN'),
+      expiresIn: this.configService.get('EXPIRED_JWT_REFRESH_TOKEN'),
     });
     await this.userRepository.update(
       {
@@ -64,5 +93,26 @@ export class AuthService {
       },
     );
     return { accessToken, refreshToken };
+  }
+
+  async verifyEmail(tokenLink: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(tokenLink, {
+        secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
+      });
+      console.log(payload);
+      const user = await this.userRepository.findOne({
+        where: {
+          id: payload.id,
+        },
+      });
+      user.isVerifiedEmail = true;
+      await this.userRepository.save(user);
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new Error('Email đã tồn tại');
+      }
+      throw new Error(error.message);
+    }
   }
 }

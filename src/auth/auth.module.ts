@@ -1,19 +1,40 @@
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { MailerModule } from '@nestjs-modules/mailer';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/user/Entity/user.entity';
-import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
-    JwtModule.register({
-      global: true,
-      secret: process.env.JWT_SECRET,
-      signOptions: {
-        expiresIn: process.env.EXPIRED_JWT,
-      },
+    ConfigModule,
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        global: true,
+        secret: configService.get('JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.get('EXPIRED_JWT'),
+        },
+      }),
+    }),
+    MailerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          secure: false,
+          host: 'smtp@gmail.com',
+          port: 587,
+          service: 'gmail',
+          auth: {
+            user: configService.get('USER_EMAIL'),
+            pass: configService.get('USER_PASSWORD'),
+          },
+        },
+      }),
     }),
   ],
   controllers: [AuthController],

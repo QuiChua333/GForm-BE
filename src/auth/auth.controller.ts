@@ -1,8 +1,17 @@
-import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { RegisterUserDTO } from './DTO';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { sendMail } from 'src/utils/mailer';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
@@ -18,13 +27,25 @@ export class AuthController {
         data: user,
       });
     } catch (error) {
-      if (error.code === '23505') {
-        res.status(HttpStatus.CONFLICT).send('Email đã tồn tại!');
-        return;
-      }
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+  @Get('verifyEmail/:tokenLink')
+  async verifyEmail(
+    @Param('tokenLink') tokenLink: string,
+    @Res() res: Response,
+  ) {
+    try {
+      await this.authService.verifyEmail(tokenLink);
+      res.status(HttpStatus.ACCEPTED).json({
+        message: 'Verify successfully',
+      });
+    } catch (error) {
       console.log(error);
       res.status(HttpStatus.BAD_REQUEST).json({
-        error,
+        message: error.message,
       });
     }
   }
