@@ -127,12 +127,41 @@ export class AuthService {
 
     const link = `${this.configService.get('FE_URL')}/reset-password/${tokenLinkResetPassword}`;
     const templateHTMLResetPassword = resetPassword(link);
-    await sendMail({
+    sendMail({
       email: user.email,
       subject: 'Thay đổi mật khẩu',
       html: templateHTMLResetPassword,
       mailService: this.mailService,
     });
+  }
+  async verifyLinkResetPassword(tokenLinkResetPassword: string) {
+    const payload = await this.jwtService.verifyAsync(tokenLinkResetPassword, {
+      secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
+    });
+    const user = await this.userRepository.findOne({
+      where: {
+        email: payload.email,
+      },
+    });
+    if (!user) throw new Error('Email không tồn tại');
+    return user.email;
+  }
+
+  async resetPassword({
+    email,
+    password,
+  }: {
+    email: string;
+    password: string;
+  }) {
+    const user = await this.userRepository.findOne({
+      where: {
+        email: email,
+      },
+    });
+    const hashedPassword = await argon.hash(password);
+    user.password = hashedPassword;
+    await this.userRepository.save(user);
   }
 
   async generateToken(payload: { id: string; email: string }) {

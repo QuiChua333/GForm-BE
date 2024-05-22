@@ -99,4 +99,41 @@ export class AuthController {
       });
     }
   }
+
+  @Get('verifyLinkResetPassword/:tokenLinkResetPassword')
+  async verifyLinkResetPassword(
+    @Param('tokenLinkResetPassword') tokenLinkResetPassword: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const email = await this.authService.verifyLinkResetPassword(
+        tokenLinkResetPassword,
+      );
+      res.status(HttpStatus.ACCEPTED).json({
+        message: 'Xác minh liên kết thành công',
+        data: email,
+      });
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Post('resetPassword')
+  async resetPassword(
+    @Body() body: { email: string; password: string },
+    @Res() res: Response,
+  ) {
+    try {
+      await this.authService.resetPassword(body);
+      res.status(HttpStatus.ACCEPTED).json({
+        message: 'Cập nhật mật khẩu thành công',
+      });
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
 }
