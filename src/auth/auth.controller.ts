@@ -85,4 +85,18 @@ export class AuthController {
       });
     }
   }
+
+  @Get('checkExistEmail/:email')
+  async checkExistEmail(@Param('email') email: string, @Res() res: Response) {
+    try {
+      await this.authService.checkExistEmail(email);
+      res.status(HttpStatus.ACCEPTED).json({
+        message: 'Có tồn tại email',
+      });
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
 }

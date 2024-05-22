@@ -9,6 +9,7 @@ import { sendMail } from 'src/utils/mailer';
 import { MailerService } from '@nestjs-modules/mailer';
 import emailVerification from 'src/utils/mailer/html_templates/emailVerification';
 import { ConfigService } from '@nestjs/config';
+import resetPassword from 'src/utils/mailer/html_templates/resetPassword';
 
 @Injectable()
 export class AuthService {
@@ -106,6 +107,34 @@ export class AuthService {
       refreshToken,
     };
   }
+  async checkExistEmail(email: string) {
+    const user = await this.userRepository.findOne({
+      where: {
+        email: email,
+      },
+    });
+    if (!user) throw new Error('Email không tồn tại');
+    const tokenLinkResetPassword = await this.jwtService.signAsync(
+      {
+        email: user.email,
+        id: user.id,
+      },
+      {
+        secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
+        expiresIn: this.configService.get('EXPIRED_JWT_LINK_EMAIL'),
+      },
+    );
+
+    const link = `${this.configService.get('FE_URL')}/reset-password/${tokenLinkResetPassword}`;
+    const templateHTMLResetPassword = resetPassword(link);
+    await sendMail({
+      email: user.email,
+      subject: 'Thay đổi mật khẩu',
+      html: templateHTMLResetPassword,
+      mailService: this.mailService,
+    });
+  }
+
   async generateToken(payload: { id: string; email: string }) {
     const accessToken = await this.jwtService.signAsync(payload);
     const refreshToken = await this.jwtService.signAsync(payload, {
