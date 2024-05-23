@@ -38,22 +38,6 @@ export class AuthController {
     }
   }
 
-  @Get('verifyEmailPublicLink/:tokenLinkPublic')
-  async verifyEmailPublicLink(
-    @Param('tokenLinkPublic') tokenLinkPublic: string,
-    @Res() res: Response,
-  ) {
-    try {
-      await this.authService.verifyEmail(tokenLinkPublic);
-      res.status(HttpStatus.ACCEPTED).json({
-        message: 'Liên kết còn thời hạn',
-      });
-    } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
-  }
   @Get('verifyEmail/:tokenLink')
   async verifyEmail(
     @Param('tokenLink') tokenLink: string,

@@ -42,34 +42,18 @@ export class AuthService {
         expiresIn: this.configService.get('EXPIRED_JWT_LINK_EMAIL'),
       },
     );
-    const tokenLinkPublic = await this.jwtService.signAsync(
-      {
-        email: user.email,
-        id: user.id,
-        public: 'public',
-      },
-      {
-        secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
-        expiresIn: this.configService.get('EXPIRED_JWT_LINK_EMAIL'),
-      },
-    );
 
     const link = `${this.configService.get('FE_URL')}/email-verification-result/${tokenLink}`;
+    console.log(link);
     const templateHTMLEmail = emailVerification(link);
-    await sendMail({
+    sendMail({
       email: user.email,
       subject: 'Xác minh email',
       html: templateHTMLEmail,
       mailService: this.mailService,
     });
-    return tokenLinkPublic;
   }
 
-  async verifyEmailPublicLink(tokenLinkPublic: string) {
-    const payload = await this.jwtService.verifyAsync(tokenLinkPublic, {
-      secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
-    });
-  }
   async verifyEmail(tokenLink: string) {
     const payload = await this.jwtService.verifyAsync(tokenLink, {
       secret: this.configService.get('JWT_SECRET_VERIFY_EMAIL'),
