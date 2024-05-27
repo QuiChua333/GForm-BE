@@ -1,7 +1,9 @@
+import { Survey } from 'src/survey/Entity/survey.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -26,6 +28,9 @@ export class User {
 
   @Column({ nullable: true })
   isVerifiedEmail: boolean;
+
+  @OneToMany(() => Survey, (survey) => survey.owner)
+  surveys: Survey[];
 
   @CreateDateColumn()
   create_at: Date;
