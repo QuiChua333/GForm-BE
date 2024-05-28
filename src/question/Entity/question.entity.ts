@@ -1,0 +1,65 @@
+import { GColumn } from 'src/gcolumn/Entity/gcolumn';
+import { LinearScale } from 'src/linear_scale/Entity/linear_scale';
+import { Option } from 'src/option/Entity/option.entity';
+import { Row } from 'src/row/Entity/row';
+import { Survey } from 'src/survey/Entity/survey.entity';
+import QuestionType from 'src/utils/interface/questionType';
+import { Validation } from 'src/validation/Entity/validation.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+
+@Entity()
+export class Question {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column()
+  question: string;
+
+  @Column()
+  description: string;
+
+  @Column()
+  image: string;
+
+  @Column()
+  isRequired: boolean;
+
+  @Column()
+  questionType: QuestionType;
+
+  @Column()
+  isValidation: boolean;
+
+  @ManyToOne(() => Survey, (survey) => survey.questions)
+  survey: Survey;
+
+  @OneToMany(() => Option, (option) => option.question)
+  options: Option[];
+
+  @OneToMany(() => Row, (row) => row.question)
+  rows: Row[];
+
+  @OneToMany(() => GColumn, (row) => row.question)
+  gcolumns: GColumn[];
+
+  @OneToOne(() => Validation, (validation) => validation.question)
+  validation: Validation;
+
+  @OneToOne(() => LinearScale, (linearScale) => linearScale.question)
+  linearScale: LinearScale;
+
+  @CreateDateColumn()
+  create_at: Date;
+
+  @CreateDateColumn()
+  update_at: Date;
+}

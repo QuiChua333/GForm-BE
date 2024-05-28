@@ -1,36 +1,34 @@
 import { Question } from 'src/question/Entity/question.entity';
-import { User } from 'src/user/Entity/user.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
-  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 @Entity()
-export class Survey {
+export class Validation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
-  ownerId: string;
+  @Column()
+  validationType: string;
 
   @Column()
-  title: string;
+  conditionName: string;
 
   @Column()
-  description: string;
+  conditionValue1: string;
 
   @Column()
-  status: string;
+  conditionValue2: string;
 
-  @ManyToOne(() => User, (user) => user.surveys)
-  owner: User;
-
-  @OneToMany(() => Question, (question) => question.survey)
-  questions: Question[];
+  @OneToOne(() => Question, (question) => question.validation)
+  @JoinColumn()
+  question: Question;
 
   @CreateDateColumn()
   create_at: Date;

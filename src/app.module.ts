@@ -5,6 +5,12 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { SurveyModule } from './survey/survey.module';
+import { QuestionModule } from './question/question.module';
+import { OptionModule } from './option/option.module';
+import { ValidationnModule } from './validation/validation.module';
+import { LinearScaleModule } from './linear_scale/linear_scale.module';
+import { RowModule } from './row/row.module';
+import { GColumnModule } from './gcolumn/gcolumn.module';
 
 @Module({
   imports: [
@@ -26,6 +32,12 @@ import { SurveyModule } from './survey/survey.module';
     AuthModule,
     UserModule,
     SurveyModule,
+    QuestionModule,
+    OptionModule,
+    ValidationnModule,
+    LinearScaleModule,
+    RowModule,
+    GColumnModule,
   ],
   controllers: [AppController],
 })

@@ -1,36 +1,34 @@
 import { Question } from 'src/question/Entity/question.entity';
-import { User } from 'src/user/Entity/user.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
-  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 @Entity()
-export class Survey {
+export class LinearScale {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
-  ownerId: string;
+  @Column()
+  min: number;
 
   @Column()
-  title: string;
+  max: number;
 
   @Column()
-  description: string;
+  leftLabel: string;
 
   @Column()
-  status: string;
+  rightLabel: string;
 
-  @ManyToOne(() => User, (user) => user.surveys)
-  owner: User;
-
-  @OneToMany(() => Question, (question) => question.survey)
-  questions: Question[];
+  @OneToOne(() => Question, (question) => question.linearScale)
+  @JoinColumn()
+  question: Question;
 
   @CreateDateColumn()
   create_at: Date;
