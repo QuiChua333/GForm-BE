@@ -34,27 +34,48 @@ export class Question {
   isRequired: boolean;
 
   @Column()
+  isHasDescription: boolean;
+
+  @Column()
   questionType: QuestionType;
 
   @Column()
   isValidation: boolean;
 
+  @Column()
+  isHasOther: boolean;
+
   @ManyToOne(() => Survey, (survey) => survey.questions)
   survey: Survey;
 
-  @OneToMany(() => Option, (option) => option.question)
+  @OneToMany(() => Option, (option) => option.question, {
+    cascade: true,
+    eager: true,
+  })
   options: Option[];
 
-  @OneToMany(() => Row, (row) => row.question)
+  @OneToMany(() => Row, (row) => row.question, {
+    cascade: true,
+    eager: true,
+  })
   rows: Row[];
 
-  @OneToMany(() => GColumn, (row) => row.question)
+  @OneToMany(() => GColumn, (row) => row.question, {
+    cascade: true,
+    eager: true,
+  })
   gcolumns: GColumn[];
 
-  @OneToOne(() => Validation, (validation) => validation.question)
+  @OneToOne(() => Validation, (validation) => validation.question, {
+    cascade: true,
+    eager: true,
+  })
   validation: Validation;
 
-  @OneToOne(() => LinearScale, (linearScale) => linearScale.question)
+  @OneToOne(() => LinearScale, (linearScale) => linearScale.question, {
+    cascade: true,
+    eager: true,
+  })
   linearScale: LinearScale;
 
   @CreateDateColumn()

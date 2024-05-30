@@ -14,7 +14,7 @@ export class Survey {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column()
   ownerId: string;
 
   @Column()
@@ -29,7 +29,10 @@ export class Survey {
   @ManyToOne(() => User, (user) => user.surveys)
   owner: User;
 
-  @OneToMany(() => Question, (question) => question.survey)
+  @OneToMany(() => Question, (question) => question.survey, {
+    cascade: true,
+    eager: true,
+  })
   questions: Question[];
 
   @CreateDateColumn()
