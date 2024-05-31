@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Survey } from './Entity/survey.entity';
 import { Question } from 'src/question/Entity/question.entity';
 import QuestionType from 'src/utils/interface/questionType';
+import { UpdateSurveyDTO } from './DTO/update-survey.dto';
 
 @Injectable()
 export class SurveyService {
@@ -41,5 +42,17 @@ export class SurveyService {
     questions.push(newQuestion);
     newSurvey.questions = questions;
     return await this.surveyRepository.save(newSurvey);
+  }
+
+  async changeSurvey(id: string, body: UpdateSurveyDTO) {
+    const survey = await this.surveyRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+    survey.description = body.description ?? survey.description;
+    survey.title = body.title ?? survey.title;
+    survey.status = body.status ?? survey.status;
+    return await this.surveyRepository.save(survey);
   }
 }

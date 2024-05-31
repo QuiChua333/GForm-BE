@@ -9,4 +9,15 @@ export class OptionService {
     @InjectRepository(Option)
     private readonly optionRepository: Repository<Option>,
   ) {}
+
+  async changeOption(id: string, body: { optionText: string }) {
+    const option = await this.optionRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+    option.optionText = body.optionText ?? option.optionText;
+
+    return await this.optionRepository.save(option);
+  }
 }

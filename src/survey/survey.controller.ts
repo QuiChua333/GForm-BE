@@ -1,14 +1,17 @@
 import {
+  Body,
   Controller,
   Get,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Req,
   Res,
 } from '@nestjs/common';
 import { SurveyService } from './survey.service';
 import { Response } from 'express';
+import { UpdateSurveyDTO } from './DTO/update-survey.dto';
 
 @Controller('survey')
 export class SurveyController {
@@ -42,6 +45,26 @@ export class SurveyController {
       res.status(HttpStatus.CREATED).json({
         message: 'Create survey successfully',
         data: newSurvey,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Patch('changeSurvey/:id')
+  async changeSurvey(
+    @Res() res: Response,
+    @Param('id') id: string,
+    @Body() body: UpdateSurveyDTO,
+  ) {
+    try {
+      const response = await this.surveyService.changeSurvey(id, body);
+      res.status(HttpStatus.OK).json({
+        message: 'Update survey successfully',
+        data: response,
       });
     } catch (error) {
       console.log(error);
