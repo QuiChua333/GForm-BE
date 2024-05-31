@@ -38,6 +38,7 @@ export class QuestionService {
         id: id,
       },
     });
+
     question.question = body.question ?? question.question;
     question.description = body.description ?? question.description;
     question.isHasDescription =
@@ -48,251 +49,189 @@ export class QuestionService {
     question.questionType = body.questionType ?? question.questionType;
     if (body.questionType) {
       const questionType = body.questionType;
-      if (body.questionType) {
-        const questionType = body.questionType;
-        switch (questionType) {
-          case QuestionType.ShortAnswer:
-          case QuestionType.Paragraph:
-            {
-              question.isValidation = false;
+      switch (questionType) {
+        case QuestionType.ShortAnswer:
 
-              const validation = await this.validationRepository.findOne({
-                where: { question: { id: question.id } },
-              });
-              if (validation) {
-                await this.validationRepository.remove(validation);
-              }
-
-              const linearScale = await this.linearScaleRepository.findOne({
-                where: { question: { id: question.id } },
-              });
-              if (linearScale) {
-                await this.linearScaleRepository.remove(linearScale);
-              }
-              const rowsToDelete = await this.rowRepository.find({
-                where: { question: { id: question.id } },
-              });
-              if (rowsToDelete) {
-                await this.rowRepository.remove(rowsToDelete);
-              }
-              const columnsToDelete = await this.columnRepository.find({
-                where: { question: { id: question.id } },
-              });
-              if (columnsToDelete) {
-                await this.columnRepository.remove(columnsToDelete);
-              }
-              const optionsToDelete = await this.optionRepository.find({
-                where: { question: { id: question.id } },
-              });
-
-              if (optionsToDelete) {
-                await this.optionRepository.remove(optionsToDelete);
-                console.log('da xoa');
-                const optionsToDelete2 = await this.optionRepository.find({
-                  where: { question: { id: question.id } },
-                });
-
-                console.log(optionsToDelete2);
-              }
-
-              question.isHasOther = false;
-            }
-            break;
-          case QuestionType.Checkbox:
-          case QuestionType.RadioButton: {
+        case QuestionType.Paragraph:
+          {
             question.isValidation = false;
-            const validation = await this.validationRepository.findOne({
-              where: { question: { id: question.id } },
-            });
-            if (validation) {
-              await this.validationRepository.remove(validation);
+
+            if (question.validation) {
+              await this.validationRepository.remove(question.validation);
+              question.validation = null;
             }
 
-            const linearScale = await this.linearScaleRepository.findOne({
-              where: { question: { id: question.id } },
-            });
-
-            if (linearScale) {
-              await this.linearScaleRepository.remove(linearScale);
+            if (question.linearScale) {
+              await this.linearScaleRepository.remove(question.linearScale);
+              question.linearScale = null;
+            }
+            if (question.rows && question.rows.length > 0) {
+              await this.rowRepository.remove(question.rows);
+              question.rows = null;
             }
 
-            const rowsToDelete = await this.rowRepository.find({
-              where: { question: { id: question.id } },
-            });
-
-            if (rowsToDelete) {
-              await this.rowRepository.remove(rowsToDelete);
+            if (question.gcolumns && question.gcolumns.length > 0) {
+              await this.columnRepository.remove(question.gcolumns);
+              question.gcolumns = null;
             }
-
-            const columnsToDelete = await this.columnRepository.find({
-              where: { question: { id: question.id } },
-            });
-
-            if (columnsToDelete) {
-              await this.columnRepository.remove(columnsToDelete);
-            }
-
-            if (question?.options?.length === 0) {
-              const newOption = new Option();
-              newOption.optionText = 'Lựa chọn 1';
-              question.options = [newOption];
-            }
-
-            break;
-          }
-          case QuestionType.Dropdown: {
-            question.isValidation = false;
-            const validation = await this.validationRepository.findOne({
-              where: { question: { id: question.id } },
-            });
-            if (validation) {
-              await this.validationRepository.remove(validation);
-            }
-
-            const linearScale = await this.linearScaleRepository.findOne({
-              where: { question: { id: question.id } },
-            });
-            if (linearScale) {
-              await this.linearScaleRepository.remove(linearScale);
-            }
-
-            const rowsToDelete = await this.rowRepository.find({
-              where: { question: { id: question.id } },
-            });
-
-            if (rowsToDelete) {
-              await this.rowRepository.remove(rowsToDelete);
-            }
-
-            const columnsToDelete = await this.columnRepository.find({
-              where: { question: { id: question.id } },
-            });
-            if (columnsToDelete) {
-              await this.columnRepository.remove(columnsToDelete);
+            if (question.options && question.options.length > 0) {
+              await this.optionRepository.remove(question.options);
+              question.options = null;
             }
 
             question.isHasOther = false;
-            if (question?.options?.length === 0) {
-              const newOption = new Option();
-              newOption.optionText = 'Lựa chọn 1';
-              question.options = [newOption];
-              console.log(222);
-            }
-            break;
           }
-          case QuestionType.LinearScale: {
-            question.isValidation = false;
-            const validation = await this.validationRepository.findOne({
-              where: { question: { id: question.id } },
-            });
-            if (validation) {
-              await this.validationRepository.remove(validation);
-            }
+          break;
+        case QuestionType.Checkbox:
+        case QuestionType.RadioButton: {
+          question.isValidation = false;
 
-            const rowsToDelete = await this.rowRepository.find({
-              where: { question: { id: question.id } },
-            });
-            if (rowsToDelete) {
-              await this.rowRepository.remove(rowsToDelete);
-            }
-
-            const columnsToDelete = await this.columnRepository.find({
-              where: { question: { id: question.id } },
-            });
-            if (columnsToDelete) {
-              await this.columnRepository.remove(columnsToDelete);
-            }
-
-            const optionsToDelete = await this.optionRepository.find({
-              where: { question: { id: question.id } },
-            });
-            if (optionsToDelete) {
-              await this.optionRepository.remove(optionsToDelete);
-            }
-
-            question.isHasOther = false;
-            const linearScale = new LinearScale();
-            linearScale.min = 1;
-            linearScale.max = 10;
-            linearScale.leftLabel = '';
-            linearScale.rightLabel = '';
-            question.linearScale = linearScale;
-            break;
+          if (question.validation) {
+            await this.validationRepository.remove(question.validation);
+            question.validation = null;
           }
-          case QuestionType.RadioButtonGrid: {
-            question.isValidation = false;
-            const validation = await this.validationRepository.findOne({
-              where: { question: { id: question.id } },
-            });
-            if (validation) {
-              await this.validationRepository.remove(validation);
-            }
 
-            const optionsToDelete = await this.optionRepository.find({
-              where: { question: { id: question.id } },
-            });
-            if (optionsToDelete) {
-              await this.optionRepository.remove(optionsToDelete);
-            }
-
-            const linearScale = await this.linearScaleRepository.findOne({
-              where: { question: { id: question.id } },
-            });
-            if (linearScale) {
-              await this.linearScaleRepository.remove(linearScale);
-            }
-
-            question.isHasOther = false;
-            const newRow = new Row();
-            newRow.rowContent = 'Hàng 1';
-            question.rows = [newRow];
-            const newColumn = new GColumn();
-            newColumn.gcolumnContent = 'Cột 1';
-            question.gcolumns = [newColumn];
-
-            break;
+          if (question.linearScale) {
+            await this.linearScaleRepository.remove(question.linearScale);
+            question.linearScale = null;
           }
-          case QuestionType.Description: {
-            question.isValidation = false;
-            const validation = await this.validationRepository.findOne({
-              where: { question: { id: question.id } },
-            });
-            if (validation) {
-              await this.validationRepository.remove(validation);
-            }
-
-            const linearScale = await this.linearScaleRepository.findOne({
-              where: { question: { id: question.id } },
-            });
-            if (linearScale) {
-              await this.linearScaleRepository.remove(linearScale);
-            }
-            const rowsToDelete = await this.rowRepository.find({
-              where: { question: { id: question.id } },
-            });
-            if (rowsToDelete) {
-              await this.rowRepository.remove(rowsToDelete);
-            }
-            const columnsToDelete = await this.columnRepository.find({
-              where: { question: { id: question.id } },
-            });
-            if (columnsToDelete) {
-              await this.columnRepository.remove(columnsToDelete);
-            }
-            const optionsToDelete = await this.optionRepository.find({
-              where: { question: { id: question.id } },
-            });
-            if (optionsToDelete) {
-              await this.optionRepository.remove(optionsToDelete);
-            }
-
-            question.isHasOther = false;
-            question.isHasDescription = true;
-            break;
+          if (question.rows && question.rows.length > 0) {
+            await this.rowRepository.remove(question.rows);
+            question.rows = null;
           }
+
+          if (question.gcolumns && question.gcolumns.length > 0) {
+            await this.columnRepository.remove(question.gcolumns);
+            question.gcolumns = null;
+          }
+
+          if (!question.options || question.options.length === 0) {
+            const newOption = new Option();
+            newOption.optionText = 'Lựa chọn 1';
+            question.options = [newOption];
+          }
+
+          break;
+        }
+        case QuestionType.Dropdown: {
+          question.isValidation = false;
+          if (question.validation) {
+            await this.validationRepository.remove(question.validation);
+            question.validation = null;
+          }
+
+          if (question.linearScale) {
+            await this.linearScaleRepository.remove(question.linearScale);
+            question.linearScale = null;
+          }
+          if (question.rows && question.rows.length > 0) {
+            await this.rowRepository.remove(question.rows);
+            question.rows = null;
+          }
+
+          if (question.gcolumns && question.gcolumns.length > 0) {
+            await this.columnRepository.remove(question.gcolumns);
+            question.gcolumns = null;
+          }
+
+          question.isHasOther = false;
+          if (question?.options?.length === 0) {
+            const newOption = new Option();
+            newOption.optionText = 'Lựa chọn 1';
+            question.options = [newOption];
+            console.log(222);
+          }
+          break;
+        }
+        case QuestionType.LinearScale: {
+          question.isValidation = false;
+          if (question.validation) {
+            await this.validationRepository.remove(question.validation);
+            question.validation = null;
+          }
+
+          if (question.rows && question.rows.length > 0) {
+            await this.rowRepository.remove(question.rows);
+            question.rows = null;
+          }
+
+          if (question.gcolumns && question.gcolumns.length > 0) {
+            await this.columnRepository.remove(question.gcolumns);
+            question.gcolumns = null;
+          }
+          if (question.options && question.options.length > 0) {
+            await this.optionRepository.remove(question.options);
+            question.options = null;
+          }
+
+          question.isHasOther = false;
+          const linearScale = new LinearScale();
+          linearScale.min = 1;
+          linearScale.max = 10;
+          linearScale.leftLabel = '';
+          linearScale.rightLabel = '';
+          question.linearScale = linearScale;
+          break;
+        }
+        case QuestionType.RadioButtonGrid: {
+          question.isValidation = false;
+          if (question.validation) {
+            await this.validationRepository.remove(question.validation);
+            question.validation = null;
+          }
+
+          if (question.linearScale) {
+            await this.linearScaleRepository.remove(question.linearScale);
+            question.linearScale = null;
+          }
+
+          if (question.options && question.options.length > 0) {
+            await this.optionRepository.remove(question.options);
+            question.options = null;
+          }
+
+          question.isHasOther = false;
+          const newRow = new Row();
+          newRow.rowContent = 'Hàng 1';
+          question.rows = [newRow];
+          const newColumn = new GColumn();
+          newColumn.gcolumnContent = 'Cột 1';
+          question.gcolumns = [newColumn];
+
+          break;
+        }
+        case QuestionType.Description: {
+          question.isValidation = false;
+          if (question.validation) {
+            await this.validationRepository.remove(question.validation);
+            question.validation = null;
+          }
+
+          if (question.linearScale) {
+            await this.linearScaleRepository.remove(question.linearScale);
+            question.linearScale = null;
+          }
+          if (question.rows && question.rows.length > 0) {
+            await this.rowRepository.remove(question.rows);
+            question.rows = null;
+          }
+
+          if (question.gcolumns && question.gcolumns.length > 0) {
+            await this.columnRepository.remove(question.gcolumns);
+            question.gcolumns = null;
+          }
+          if (question.options && question.options.length > 0) {
+            await this.optionRepository.remove(question.options);
+            question.options = null;
+          }
+
+          question.isHasOther = false;
+          question.isHasDescription = true;
+          break;
         }
       }
     }
+
     await this.questionRepository.save(question);
     return question;
   }
