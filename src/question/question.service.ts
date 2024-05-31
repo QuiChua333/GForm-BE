@@ -45,6 +45,7 @@ export class QuestionService {
       body.isHasDescription ?? question.isHasDescription;
     if (body.isHasDescription === false) question.description = '';
     question.isRequired = body.isRequired ?? question.isRequired;
+    question.isHasOther = body.isHasOther ?? question.isHasOther;
     question.isValidation = body.isValidation ?? question.isValidation;
     question.questionType = body.questionType ?? question.questionType;
     if (body.questionType) {
@@ -167,7 +168,7 @@ export class QuestionService {
           question.isHasOther = false;
           const linearScale = new LinearScale();
           linearScale.min = 1;
-          linearScale.max = 10;
+          linearScale.max = 5;
           linearScale.leftLabel = '';
           linearScale.rightLabel = '';
           question.linearScale = linearScale;

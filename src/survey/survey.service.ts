@@ -19,6 +19,14 @@ export class SurveyService {
       where: {
         id: id,
       },
+      order: {
+        questions: {
+          create_at: 'ASC',
+          options: {
+            create_at: 'ASC',
+          },
+        },
+      },
     });
     return survey;
   }

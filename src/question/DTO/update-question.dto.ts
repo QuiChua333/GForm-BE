@@ -25,4 +25,7 @@ export class UpdateQuestionDTO {
 
   @IsOptional()
   isValidation: boolean;
+
+  @IsOptional()
+  isHasOther: boolean;
 }
