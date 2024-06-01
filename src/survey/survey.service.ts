@@ -25,6 +25,12 @@ export class SurveyService {
           options: {
             create_at: 'ASC',
           },
+          rows: {
+            create_at: 'ASC',
+          },
+          gcolumns: {
+            create_at: 'ASC',
+          },
         },
       },
     });

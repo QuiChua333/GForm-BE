@@ -1,7 +1,76 @@
-import { Controller } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { GColumnService } from './gcolumn.service';
+import { Response } from 'express';
 
-@Controller('row')
+@Controller('gcolumn')
 export class GColumnController {
   constructor(private readonly gcolumnService: GColumnService) {}
+
+  @Patch('changeGColumn/:id')
+  async changeGColumn(
+    @Res() res: Response,
+    @Param('id') id: string,
+    @Body() body: { gcolumnContent: string },
+  ) {
+    try {
+      const response = await this.gcolumnService.changeGColumn(id, body);
+      res.status(HttpStatus.OK).json({
+        message: 'Update gcolumn successfully',
+        data: response,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Post('addGColumn/:questionId')
+  async addGColumn(
+    @Res() res: Response,
+    @Param('questionId') questionId: string,
+    @Body() body: { gcolumnContent: string },
+  ) {
+    try {
+      const response = await this.gcolumnService.addGColumn(questionId, body);
+      res.status(HttpStatus.OK).json({
+        message: 'Update gcolumn successfully',
+        data: response,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Delete('deleteGColumn/:gcolumnId')
+  async deleteGColumn(
+    @Res() res: Response,
+    @Param('gcolumnId') gcolumnId: string,
+  ) {
+    try {
+      const response = await this.gcolumnService.deleteGColumn(gcolumnId);
+      res.status(HttpStatus.OK).json({
+        message: 'Delete gcolumn successfully',
+        data: response,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
 }
