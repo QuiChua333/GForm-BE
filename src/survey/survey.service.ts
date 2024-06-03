@@ -18,25 +18,6 @@ export class SurveyService {
   ) {}
 
   async getSurveyById(id: string) {
-    // const survey = await this.surveyRepository.findOne({
-    //   where: {
-    //     id: id,
-    //   },
-    //   order: {
-    //     questions: {
-    //       create_at: 'ASC',
-    //       options: {
-    //         create_at: 'ASC',
-    //       },
-    //       rows: {
-    //         create_at: 'ASC',
-    //       },
-    //       gcolumns: {
-    //         create_at: 'ASC',
-    //       },
-    //     },
-    //   },
-    // });
     const survey = await this.surveyRepository.findOne({
       where: {
         id: id,

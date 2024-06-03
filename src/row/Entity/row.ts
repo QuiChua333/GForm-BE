@@ -17,7 +17,9 @@ export class Row {
   @Column()
   rowContent: string;
 
-  @ManyToOne(() => Question, (quesiton) => quesiton.rows)
+  @ManyToOne(() => Question, (quesiton) => quesiton.rows, {
+    onDelete: 'CASCADE',
+  })
   question: Question;
 
   @CreateDateColumn()

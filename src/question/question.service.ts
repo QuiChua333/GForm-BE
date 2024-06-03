@@ -9,6 +9,7 @@ import { GColumn } from 'src/gcolumn/Entity/gcolumn';
 import { Option } from 'src/option/Entity/option.entity';
 import { LinearScale } from 'src/linear_scale/Entity/linear_scale';
 import { Validation } from 'src/validation/Entity/validation.entity';
+import { Survey } from 'src/survey/Entity/survey.entity';
 
 @Injectable()
 export class QuestionService {
@@ -30,6 +31,9 @@ export class QuestionService {
 
     @InjectRepository(Validation)
     private readonly validationRepository: Repository<Validation>,
+
+    @InjectRepository(Survey)
+    private readonly surveyRepository: Repository<Survey>,
   ) {}
 
   async changeQuestion(id: string, body: UpdateQuestionDTO) {
@@ -244,7 +248,7 @@ export class QuestionService {
       },
       relations: ['survey'],
     });
-    const addQuestion = new Question();
+    let addQuestion = new Question();
     addQuestion.question = '';
     addQuestion.image = '';
     addQuestion.description = '';
@@ -267,7 +271,7 @@ export class QuestionService {
         responseAddQuestion.previousQuestionId = currentQuestion.id;
 
         await this.questionRepository.save(currentQuestion);
-        await this.questionRepository.save(responseAddQuestion);
+        addQuestion = await this.questionRepository.save(responseAddQuestion);
       } else {
         const nextCurrentQuestion = await this.questionRepository.findOne({
           where: { id: currentQuestion.nextQuestionId },
@@ -277,8 +281,8 @@ export class QuestionService {
         responseAddQuestion.nextQuestionId = nextCurrentQuestion.id;
         nextCurrentQuestion.previousQuestionId = responseAddQuestion.id;
         await this.questionRepository.save(currentQuestion);
-        await this.questionRepository.save(responseAddQuestion);
         await this.questionRepository.save(nextCurrentQuestion);
+        addQuestion = await this.questionRepository.save(responseAddQuestion);
       }
     } else if (position === 'before') {
       if (
@@ -288,7 +292,7 @@ export class QuestionService {
         currentQuestion.previousQuestionId = responseAddQuestion.id;
         responseAddQuestion.nextQuestionId = currentQuestion.id;
         await this.questionRepository.save(currentQuestion);
-        await this.questionRepository.save(responseAddQuestion);
+        addQuestion = await this.questionRepository.save(responseAddQuestion);
       } else {
         const previousCurrentQuestion = await this.questionRepository.findOne({
           where: { id: currentQuestion.previousQuestionId },
@@ -298,10 +302,188 @@ export class QuestionService {
         responseAddQuestion.nextQuestionId = currentQuestion.id;
         currentQuestion.previousQuestionId = responseAddQuestion.id;
         await this.questionRepository.save(previousCurrentQuestion);
-        await this.questionRepository.save(responseAddQuestion);
+
         await this.questionRepository.save(currentQuestion);
+        addQuestion = await this.questionRepository.save(responseAddQuestion);
       }
     }
-    return responseAddQuestion;
+    return addQuestion;
+  }
+  async addFirstQuestion(surveyId: string) {
+    const survey = await this.surveyRepository.findOne({
+      where: {
+        id: surveyId,
+      },
+    });
+    if (!survey) throw new Error('Khảo sát không tồn tại');
+    const addQuestion = new Question();
+    addQuestion.question = '';
+    addQuestion.image = '';
+    addQuestion.description = '';
+    addQuestion.isHasDescription = false;
+    addQuestion.isRequired = false;
+    addQuestion.questionType = QuestionType.ShortAnswer;
+    addQuestion.isValidation = false;
+    addQuestion.isHasOther = false;
+    addQuestion.nextQuestionId = '';
+    addQuestion.previousQuestionId = '';
+    addQuestion.survey = survey;
+    return await this.questionRepository.save(addQuestion);
+  }
+
+  async duplicateQuestion(questionId: string) {
+    const currentQuestion = await this.questionRepository.findOne({
+      where: {
+        id: questionId,
+      },
+      relations: ['survey'],
+      order: {
+        options: {
+          create_at: 'ASC',
+        },
+        rows: {
+          create_at: 'ASC',
+        },
+        gcolumns: {
+          create_at: 'ASC',
+        },
+      },
+    });
+    const newQuestion = await this.copyFrom(currentQuestion);
+    console.log(newQuestion);
+    return newQuestion;
+  }
+  async deleteQuestion(questionId: string) {
+    const currentQuestion = await this.questionRepository.findOne({
+      where: {
+        id: questionId,
+      },
+    });
+    if (
+      !currentQuestion.previousQuestionId &&
+      !currentQuestion.nextQuestionId
+    ) {
+      await this.questionRepository.remove(currentQuestion);
+    } else if (!currentQuestion.previousQuestionId) {
+      const nextQuestion = await this.questionRepository.findOne({
+        where: {
+          id: currentQuestion.nextQuestionId,
+        },
+      });
+      nextQuestion.previousQuestionId = '';
+      await this.questionRepository.save(nextQuestion);
+      await this.questionRepository.remove(currentQuestion);
+    } else if (!currentQuestion.nextQuestionId) {
+      const previousQuestion = await this.questionRepository.findOne({
+        where: {
+          id: currentQuestion.previousQuestionId,
+        },
+      });
+      previousQuestion.nextQuestionId = '';
+      await this.questionRepository.save(previousQuestion);
+      await this.questionRepository.remove(currentQuestion);
+    } else {
+      const previousQuestion = await this.questionRepository.findOne({
+        where: {
+          id: currentQuestion.previousQuestionId,
+        },
+      });
+      const nextQuestion = await this.questionRepository.findOne({
+        where: {
+          id: currentQuestion.nextQuestionId,
+        },
+      });
+      previousQuestion.nextQuestionId = nextQuestion.id;
+      nextQuestion.previousQuestionId = previousQuestion.id;
+      await this.questionRepository.save(previousQuestion);
+      await this.questionRepository.save(nextQuestion);
+      await this.questionRepository.remove(currentQuestion);
+    }
+    return currentQuestion;
+  }
+
+  async copyFrom(question: Question) {
+    let newQuestion = new Question();
+    newQuestion.question = question.question;
+    newQuestion.description = question.description;
+    newQuestion.image = question.image;
+    newQuestion.isRequired = question.isRequired;
+    newQuestion.isHasDescription = question.isHasDescription;
+    newQuestion.questionType = question.questionType;
+    newQuestion.isValidation = question.isValidation;
+    newQuestion.isHasOther = question.isHasOther;
+    newQuestion.survey = question.survey;
+    newQuestion.nextQuestionId = '';
+    newQuestion.previousQuestionId = '';
+
+    if (question.validation) {
+      const validation = new Validation();
+      validation.conditionName = question.validation.conditionName;
+      validation.conditionValue1 = question.validation.conditionValue1;
+      validation.conditionValue2 = question.validation.conditionValue2;
+      newQuestion.validation = validation;
+    }
+
+    if (question.linearScale) {
+      const linearScale = new LinearScale();
+      linearScale.min = question.linearScale.min;
+      linearScale.max = question.linearScale.max;
+      linearScale.leftLabel = question.linearScale.leftLabel;
+      linearScale.rightLabel = question.linearScale.rightLabel;
+      newQuestion.linearScale = linearScale;
+    }
+
+    if (question.options) {
+      const options: Option[] = [];
+      for (const option of question.options) {
+        const newOption = new Option();
+        newOption.optionText = option.optionText;
+        options.push(newOption);
+      }
+      newQuestion.options = options;
+    }
+
+    if (question.rows) {
+      const rows: Row[] = [];
+      for (const row of question.rows) {
+        const newRow = new Row();
+        newRow.rowContent = row.rowContent;
+        rows.push(row);
+      }
+      newQuestion.rows = rows;
+    }
+
+    if (question.gcolumns) {
+      const gcolmns: GColumn[] = [];
+      for (const gcolumn of question.gcolumns) {
+        const newGColumn = new GColumn();
+        newGColumn.gcolumnContent = gcolumn.gcolumnContent;
+        gcolmns.push(gcolumn);
+      }
+      newQuestion.gcolumns = gcolmns;
+    }
+
+    newQuestion = await this.questionRepository.save(newQuestion);
+
+    if (!question.nextQuestionId) {
+      question.nextQuestionId = newQuestion.id;
+      newQuestion.previousQuestionId = question.id;
+
+      await this.questionRepository.save(question);
+      return await this.questionRepository.save(newQuestion);
+    } else {
+      const nextQuestion = await this.questionRepository.findOne({
+        where: {
+          id: question.nextQuestionId,
+        },
+      });
+      question.nextQuestionId = newQuestion.id;
+      newQuestion.previousQuestionId = question.id;
+      newQuestion.nextQuestionId = nextQuestion.id;
+      nextQuestion.previousQuestionId = newQuestion.id;
+      await this.questionRepository.save(question);
+      await this.questionRepository.save(nextQuestion);
+      return await this.questionRepository.save(newQuestion);
+    }
   }
 }

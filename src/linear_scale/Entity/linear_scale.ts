@@ -26,7 +26,9 @@ export class LinearScale {
   @Column()
   rightLabel: string;
 
-  @OneToOne(() => Question, (question) => question.linearScale)
+  @OneToOne(() => Question, (question) => question.linearScale, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   question: Question;
 

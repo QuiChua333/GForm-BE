@@ -8,6 +8,7 @@ import { Option } from 'src/option/Entity/option.entity';
 import { GColumn } from 'src/gcolumn/Entity/gcolumn';
 import { LinearScale } from 'src/linear_scale/Entity/linear_scale';
 import { Validation } from 'src/validation/Entity/validation.entity';
+import { Survey } from 'src/survey/Entity/survey.entity';
 
 @Module({
   controllers: [QuestionController],
@@ -20,6 +21,7 @@ import { Validation } from 'src/validation/Entity/validation.entity';
       GColumn,
       LinearScale,
       Validation,
+      Survey,
     ]),
   ],
 })

@@ -15,7 +15,9 @@ export class Option {
   @Column()
   optionText: string;
 
-  @ManyToOne(() => Question, (quesiton) => quesiton.options)
+  @ManyToOne(() => Question, (quesiton) => quesiton.options, {
+    onDelete: 'CASCADE',
+  })
   question: Question;
 
   @CreateDateColumn()

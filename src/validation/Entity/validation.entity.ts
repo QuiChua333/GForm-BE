@@ -26,7 +26,9 @@ export class Validation {
   @Column()
   conditionValue2: string;
 
-  @OneToOne(() => Question, (question) => question.validation)
+  @OneToOne(() => Question, (question) => question.validation, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   question: Question;
 

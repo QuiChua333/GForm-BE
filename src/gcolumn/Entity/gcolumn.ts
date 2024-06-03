@@ -15,7 +15,9 @@ export class GColumn {
   @Column()
   gcolumnContent: string;
 
-  @ManyToOne(() => Question, (quesiton) => quesiton.gcolumns)
+  @ManyToOne(() => Question, (quesiton) => quesiton.gcolumns, {
+    onDelete: 'CASCADE',
+  })
   question: Question;
 
   @CreateDateColumn()

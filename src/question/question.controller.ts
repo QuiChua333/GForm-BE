@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpStatus,
   Param,
   Patch,
@@ -47,6 +48,63 @@ export class QuestionController {
       res.status(HttpStatus.OK).json({
         message: 'Add question successfully',
         data: question,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Post('addFirstQuestion')
+  async addFirstQuestion(
+    @Res() res: Response,
+    @Body() { surveyId }: { surveyId: string },
+  ) {
+    try {
+      const question = await this.questionService.addFirstQuestion(surveyId);
+      res.status(HttpStatus.OK).json({
+        message: 'Add question successfully',
+        data: question,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Post('duplicateQuestion')
+  async duplicateQuestion(
+    @Res() res: Response,
+    @Body() { questionId }: { questionId: string },
+  ) {
+    try {
+      const question = await this.questionService.duplicateQuestion(questionId);
+      res.status(HttpStatus.OK).json({
+        message: 'Duplicate question successfully',
+        data: question,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Delete('deleteQuestion/:questionId')
+  async deleteQuestion(
+    @Res() res: Response,
+    @Param('questionId') questionId: string,
+  ) {
+    try {
+      const response = await this.questionService.deleteQuestion(questionId);
+      res.status(HttpStatus.OK).json({
+        message: 'Delete question successfully',
+        data: response,
       });
     } catch (error) {
       console.log(error);
