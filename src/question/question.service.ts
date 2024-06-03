@@ -236,4 +236,72 @@ export class QuestionService {
     await this.questionRepository.save(question);
     return question;
   }
+
+  async addQuestion(currentQuestionId: string, position: 'before' | 'after') {
+    const currentQuestion = await this.questionRepository.findOne({
+      where: {
+        id: currentQuestionId,
+      },
+      relations: ['survey'],
+    });
+    const addQuestion = new Question();
+    addQuestion.question = '';
+    addQuestion.image = '';
+    addQuestion.description = '';
+    addQuestion.isHasDescription = false;
+    addQuestion.isRequired = false;
+    addQuestion.questionType = QuestionType.ShortAnswer;
+    addQuestion.isValidation = false;
+    addQuestion.isHasOther = false;
+    addQuestion.nextQuestionId = '';
+    addQuestion.previousQuestionId = '';
+    addQuestion.survey = currentQuestion.survey;
+
+    const responseAddQuestion = await this.questionRepository.save(addQuestion);
+    if (position === 'after') {
+      if (
+        !currentQuestion.nextQuestionId ||
+        currentQuestion.nextQuestionId === ''
+      ) {
+        currentQuestion.nextQuestionId = responseAddQuestion.id;
+        responseAddQuestion.previousQuestionId = currentQuestion.id;
+
+        await this.questionRepository.save(currentQuestion);
+        await this.questionRepository.save(responseAddQuestion);
+      } else {
+        const nextCurrentQuestion = await this.questionRepository.findOne({
+          where: { id: currentQuestion.nextQuestionId },
+        });
+        currentQuestion.nextQuestionId = responseAddQuestion.id;
+        responseAddQuestion.previousQuestionId = currentQuestion.id;
+        responseAddQuestion.nextQuestionId = nextCurrentQuestion.id;
+        nextCurrentQuestion.previousQuestionId = responseAddQuestion.id;
+        await this.questionRepository.save(currentQuestion);
+        await this.questionRepository.save(responseAddQuestion);
+        await this.questionRepository.save(nextCurrentQuestion);
+      }
+    } else if (position === 'before') {
+      if (
+        !currentQuestion.previousQuestionId ||
+        currentQuestion.previousQuestionId === ''
+      ) {
+        currentQuestion.previousQuestionId = responseAddQuestion.id;
+        responseAddQuestion.nextQuestionId = currentQuestion.id;
+        await this.questionRepository.save(currentQuestion);
+        await this.questionRepository.save(responseAddQuestion);
+      } else {
+        const previousCurrentQuestion = await this.questionRepository.findOne({
+          where: { id: currentQuestion.previousQuestionId },
+        });
+        previousCurrentQuestion.nextQuestionId = responseAddQuestion.id;
+        responseAddQuestion.previousQuestionId = previousCurrentQuestion.id;
+        responseAddQuestion.nextQuestionId = currentQuestion.id;
+        currentQuestion.previousQuestionId = responseAddQuestion.id;
+        await this.questionRepository.save(previousCurrentQuestion);
+        await this.questionRepository.save(responseAddQuestion);
+        await this.questionRepository.save(currentQuestion);
+      }
+    }
+    return responseAddQuestion;
+  }
 }

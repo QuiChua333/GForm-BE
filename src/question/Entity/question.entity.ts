@@ -45,6 +45,12 @@ export class Question {
   @Column()
   isHasOther: boolean;
 
+  @Column()
+  nextQuestionId?: string;
+
+  @Column()
+  previousQuestionId?: string;
+
   @ManyToOne(() => Survey, (survey) => survey.questions)
   survey: Survey;
 
