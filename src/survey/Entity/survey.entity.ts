@@ -1,4 +1,5 @@
 import { Question } from 'src/question/Entity/question.entity';
+import { Response } from 'src/response/Entity/response';
 import { User } from 'src/user/Entity/user.entity';
 import {
   Column,
@@ -33,6 +34,9 @@ export class Survey {
     cascade: true,
   })
   questions: Question[];
+
+  @OneToMany(() => Response, (response) => response.survey)
+  responses: Response[];
 
   @CreateDateColumn()
   create_at: Date;
