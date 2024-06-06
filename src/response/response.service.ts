@@ -7,6 +7,8 @@ import { Answer } from 'src/answer/Entity/answer';
 import { MultiChooseOption } from 'src/multi-choose-option/Entity/multiChooseOption';
 import { MultiChooseGrid } from 'src/multi-choose-grid/Entity/multiChooseGrid';
 import { Question } from 'src/question/Entity/question.entity';
+import { Survey } from 'src/survey/Entity/survey.entity';
+import QuestionResponseInterface from 'src/utils/interface/questionResponseInterface';
 
 @Injectable()
 export class ResponseService {
@@ -25,6 +27,9 @@ export class ResponseService {
 
     @InjectRepository(Question)
     private readonly questionRepository: Repository<Question>,
+
+    @InjectRepository(Survey)
+    private readonly surveyRepository: Repository<Survey>,
   ) {}
 
   async createResponse(body: CreateResponseDTO) {
@@ -50,7 +55,10 @@ export class ResponseService {
         isHasResponseAnswer = true;
       }
 
-      if (tmpAnswer.linearValue) {
+      if (
+        tmpAnswer.linearValue !== undefined &&
+        tmpAnswer.linearValue !== null
+      ) {
         newAnswer.linearValue = tmpAnswer.linearValue;
         isHasResponseAnswer = true;
       }
@@ -105,5 +113,131 @@ export class ResponseService {
       newResponse.answers = answers;
     }
     return await this.responseRepository.save(newResponse);
+  }
+
+  async getResponseSurvey(surveyId: string) {
+    const questions = await this.questionRepository.find({
+      where: { survey: { id: surveyId } },
+      order: {
+        create_at: 'ASC',
+        options: {
+          create_at: 'ASC',
+        },
+        rows: {
+          create_at: 'ASC',
+        },
+        gcolumns: {
+          create_at: 'ASC',
+        },
+      },
+    });
+
+    // Khởi tạo mảng kết quả
+    const questionResponses: QuestionResponseInterface[] = [];
+
+    // Duyệt qua từng câu hỏi
+    for (const question of questions) {
+      // Tạo đối tượng response cho câu hỏi
+      const questionResponse: QuestionResponseInterface = {
+        questionId: question.id,
+        questionContent: question.question,
+        questionType: question.questionType,
+        textResponses: [],
+        optionReponses: [],
+        rowGColumnResponses: [],
+      };
+
+      // Lấy tất cả các option từ câu hỏi
+      let options = question.options.map((option) => option.optionText);
+
+      if (question.isHasOther) {
+        // Lấy tất cả các otherText từ các câu trả lời
+        const otherTexts = await this.answerRepository
+          .createQueryBuilder('answer')
+          .select('DISTINCT answer.otherText', 'otherText')
+          .where('answer.questionId = :questionId', { questionId: question.id })
+          .andWhere('answer.isChooseOther = true')
+          .getRawMany();
+
+        // Loại bỏ các otherText trùng lặp và không phải là option
+        const uniqueOtherTexts = otherTexts.map(
+          (otherText) => otherText.otherText,
+        );
+        options = options.concat(
+          uniqueOtherTexts.filter((otherText) => !options.includes(otherText)),
+        );
+      }
+
+      // Lấy tất cả các hàng từ câu hỏi
+      const rows = question.rows.map((row) => row.rowContent);
+
+      // Lấy tất cả các cột từ câu hỏi
+      const gcolumns = question.gcolumns.map(
+        (gcolumn) => gcolumn.gcolumnContent,
+      );
+
+      // Lấy tất cả các câu trả lời liên quan đến câu hỏi
+      const answers = await this.answerRepository.find({
+        where: { question: { id: question.id } },
+        relations: ['multiChooseOption', 'multiChooseGrid'],
+      });
+
+      questionResponse.textResponses = answers
+        .map((answer) => answer.answerText)
+        .filter((text) => text !== null && text !== undefined);
+
+      // Thống kê số lượng câu trả lời cho mỗi option
+      questionResponse.optionReponses = options.map((option) => {
+        const quantity = answers.filter(
+          (answer) =>
+            answer.multiChooseOption.some((opt) => opt.option === option) ||
+            (answer.isChooseOther && answer.otherText === option) ||
+            answer.singleOption === option,
+        ).length;
+        return { optionContent: option, quantity };
+      });
+
+      // Thống kê số lượng câu trả lời cho mỗi hàng và cột
+      questionResponse.rowGColumnResponses = rows.map((row) => ({
+        row: row,
+        gcolumns: gcolumns.map((gcolumn) => ({
+          gcolumnContent: gcolumn,
+          quantity: answers.filter((answer) =>
+            answer.multiChooseGrid.some(
+              (grid) => grid.row === row && grid.gcolumn === gcolumn,
+            ),
+          ).length,
+        })),
+      }));
+
+      if (question.linearScale) {
+        const min = question.linearScale.min;
+        const max = question.linearScale.max;
+        const linearValueCounts: number[] = new Array(max - min + 1).fill(0);
+        answers.forEach((answer) => {
+          if (
+            answer.linearValue !== null &&
+            answer.linearValue !== undefined &&
+            answer.linearValue >= min &&
+            answer.linearValue <= max
+          ) {
+            linearValueCounts[answer.linearValue - min]++;
+          }
+        });
+        const linearResponses: {
+          value: number;
+          quantity: number;
+        }[] = linearValueCounts.map((count, index) => ({
+          value: min + index,
+          quantity: count,
+        }));
+        questionResponse.linearResponses = linearResponses;
+      }
+
+      // Thêm questionResponse vào mảng kết quả
+      questionResponses.push(questionResponse);
+    }
+
+    return questionResponses;
   }
 }

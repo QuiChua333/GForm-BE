@@ -7,6 +7,7 @@ import { Answer } from 'src/answer/Entity/answer';
 import { MultiChooseOption } from 'src/multi-choose-option/Entity/multiChooseOption';
 import { MultiChooseGrid } from 'src/multi-choose-grid/Entity/multiChooseGrid';
 import { Question } from 'src/question/Entity/question.entity';
+import { Survey } from 'src/survey/Entity/survey.entity';
 
 @Module({
   controllers: [ResponseController],
@@ -18,6 +19,7 @@ import { Question } from 'src/question/Entity/question.entity';
       MultiChooseOption,
       MultiChooseGrid,
       Question,
+      Survey,
     ]),
   ],
 })
