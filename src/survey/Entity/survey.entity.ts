@@ -24,8 +24,10 @@ export class Survey {
   @Column()
   description: string;
 
-  @Column()
-  status: string;
+  @Column({
+    default: true,
+  })
+  isAccepting: boolean;
 
   @ManyToOne(() => User, (user) => user.surveys)
   owner: User;

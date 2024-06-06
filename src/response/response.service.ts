@@ -35,6 +35,12 @@ export class ResponseService {
   async createResponse(body: CreateResponseDTO) {
     const newResponse = new Response();
     newResponse.submissionDate = new Date();
+    const survey = await this.surveyRepository.findOne({
+      where: {
+        id: body.surveyId,
+      },
+    });
+    newResponse.survey = survey;
     const answers: Answer[] = [];
     for (let i = 0; i < body.answers.length; i++) {
       const tmpAnswer = body.answers[i];
@@ -116,21 +122,20 @@ export class ResponseService {
   }
 
   async getResponseSurvey(surveyId: string) {
-    const questions = await this.questionRepository.find({
-      where: { survey: { id: surveyId } },
-      order: {
-        create_at: 'ASC',
-        options: {
-          create_at: 'ASC',
-        },
-        rows: {
-          create_at: 'ASC',
-        },
-        gcolumns: {
-          create_at: 'ASC',
+    const survey = await this.surveyRepository.findOne({
+      where: {
+        id: surveyId,
+      },
+    });
+    const quantityOfResponses = await this.responseRepository.count({
+      where: {
+        survey: {
+          id: surveyId,
         },
       },
     });
+
+    const questions = await this.getOrderedQuestions(surveyId);
 
     // Khởi tạo mảng kết quả
     const questionResponses: QuestionResponseInterface[] = [];
@@ -233,11 +238,66 @@ export class ResponseService {
         }));
         questionResponse.linearResponses = linearResponses;
       }
-
-      // Thêm questionResponse vào mảng kết quả
-      questionResponses.push(questionResponse);
+      questionResponse.numberOfResponses = answers.length;
+      if (questionResponse.numberOfResponses > 0) {
+        // Thêm questionResponse vào mảng kết quả
+        questionResponses.push(questionResponse);
+      }
     }
 
-    return questionResponses;
+    return {
+      survey,
+      quantityOfResponses,
+      questionResponses,
+    };
+  }
+
+  async getOrderedQuestions(surveyId: string): Promise<Question[]> {
+    const orderedQuestions: Question[] = [];
+    let firstQuestion = await this.questionRepository.findOne({
+      where: {
+        survey: {
+          id: surveyId,
+        },
+        previousQuestionId: '',
+      },
+      order: {
+        create_at: 'ASC',
+        options: {
+          create_at: 'ASC',
+        },
+        rows: {
+          create_at: 'ASC',
+        },
+        gcolumns: {
+          create_at: 'ASC',
+        },
+      },
+    });
+
+    while (firstQuestion) {
+      orderedQuestions.push(firstQuestion);
+      if (firstQuestion.nextQuestionId) {
+        firstQuestion = await this.questionRepository.findOne({
+          where: { id: firstQuestion.nextQuestionId },
+          order: {
+            create_at: 'ASC',
+            options: {
+              create_at: 'ASC',
+            },
+            rows: {
+              create_at: 'ASC',
+            },
+            gcolumns: {
+              create_at: 'ASC',
+            },
+          },
+        });
+      } else {
+        firstQuestion = null;
+      }
+    }
+
+    return orderedQuestions;
   }
 }

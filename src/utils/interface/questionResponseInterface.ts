@@ -4,6 +4,7 @@ interface QuestionResponseInterface {
   questionId?: string;
   questionContent?: string;
   questionType?: QuestionType;
+  numberOfResponses?: number;
   textResponses?: string[];
   linearResponses?: {
     value: number;

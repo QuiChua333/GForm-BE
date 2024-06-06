@@ -12,7 +12,9 @@ export class Option {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   optionText: string;
 
   @ManyToOne(() => Question, (quesiton) => quesiton.options, {

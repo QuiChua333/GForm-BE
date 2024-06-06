@@ -17,7 +17,9 @@ export class MultiChooseGrid {
   @Column()
   row: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   gcolumn: string;
 
   @ManyToOne(() => Answer, (answer) => answer.multiChooseGrid, {

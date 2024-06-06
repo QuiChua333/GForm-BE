@@ -1,6 +1,7 @@
 import { IsOptional } from 'class-validator';
 
 export class CreateResponseDTO {
+  surveyId: string;
   answers: AnswerInterface[];
 }
 

@@ -33,7 +33,7 @@ export class SurveyService {
     newSurvey.ownerId = '4b9c24dd-4899-41f5-a33d-b37b1c11cb70';
     newSurvey.description = '';
     newSurvey.title = 'Tiêu đề khảo sát';
-    newSurvey.status = 'Bản nháp';
+    newSurvey.isAccepting = true;
     const questions: Question[] = [];
     const newQuestion = new Question();
     newQuestion.question = '';
@@ -59,7 +59,7 @@ export class SurveyService {
     });
     survey.description = body.description ?? survey.description;
     survey.title = body.title ?? survey.title;
-    survey.status = body.status ?? survey.status;
+    survey.isAccepting = body.isAccepting ?? survey.isAccepting;
     return await this.surveyRepository.save(survey);
   }
 

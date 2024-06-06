@@ -11,5 +11,5 @@ export class UpdateSurveyDTO {
   title: string;
 
   @IsOptional()
-  status: string;
+  isAccepting: boolean;
 }
