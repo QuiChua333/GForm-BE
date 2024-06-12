@@ -11,10 +11,10 @@ export class LinearScaleService {
     private readonly linearScaleRepository: Repository<LinearScale>,
   ) {}
 
-  async changeLinearScale(id: string, body: UpdateLinearScaleDTO) {
+  async changeLinearScale(body: UpdateLinearScaleDTO) {
     const linearScale = await this.linearScaleRepository.findOne({
       where: {
-        id: id,
+        id: body.id,
       },
     });
     linearScale.min = body.min ?? linearScale.min;

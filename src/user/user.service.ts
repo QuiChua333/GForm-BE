@@ -8,15 +8,14 @@ export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
-  register() {
-    return {
-      message: 'Register a user',
-    };
-  }
-
-  login() {
-    return {
-      message: 'login successfully',
-    };
+  async getCurrentUser(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+    delete user.password;
+    delete user.refreshToken;
+    return user;
   }
 }

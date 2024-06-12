@@ -6,7 +6,8 @@ import { Survey } from './Entity/survey.entity';
 import { Question } from 'src/question/Entity/question.entity';
 import QuestionType from 'src/utils/interface/questionType';
 import { UpdateSurveyDTO } from './DTO/update-survey.dto';
-
+import { User } from 'src/user/Entity/user.entity';
+const LIMIT: number = 10;
 @Injectable()
 export class SurveyService {
   constructor(
@@ -15,6 +16,9 @@ export class SurveyService {
 
     @InjectRepository(Question)
     private readonly questionRepository: Repository<Question>,
+
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async getSurveyById(id: string) {
@@ -28,15 +32,15 @@ export class SurveyService {
     return survey;
   }
 
-  async createSurvey() {
+  async createSurvey(userId: string) {
     const newSurvey = new Survey();
-    newSurvey.ownerId = '4b9c24dd-4899-41f5-a33d-b37b1c11cb70';
+    newSurvey.ownerId = userId;
     newSurvey.description = '';
     newSurvey.title = 'Tiêu đề khảo sát';
     newSurvey.isAccepting = true;
     const questions: Question[] = [];
     const newQuestion = new Question();
-    newQuestion.question = '';
+    newQuestion.question = 'Câu hỏi';
     newQuestion.image = '';
     newQuestion.description = '';
     newQuestion.isHasDescription = false;
@@ -51,10 +55,10 @@ export class SurveyService {
     return await this.surveyRepository.save(newSurvey);
   }
 
-  async changeSurvey(id: string, body: UpdateSurveyDTO) {
+  async changeSurvey(body: UpdateSurveyDTO) {
     const survey = await this.surveyRepository.findOne({
       where: {
-        id: id,
+        id: body.id,
       },
     });
     survey.description = body.description ?? survey.description;
@@ -110,5 +114,49 @@ export class SurveyService {
     }
 
     return orderedQuestions;
+  }
+  async getSurveysOfCurrentUser(
+    userId: string,
+    query: { page: string; status: string; searchString: string },
+  ) {
+    const pageParam = Number(query.page);
+
+    const queryBuilder = this.surveyRepository
+      .createQueryBuilder('survey')
+      .where('survey.ownerId = :userId', { userId })
+      .loadRelationCountAndMap('survey.questionsCount', 'survey.questions')
+      .loadRelationCountAndMap('survey.responsesCount', 'survey.responses')
+      .orderBy('survey.create_at', 'DESC')
+      .skip(pageParam * LIMIT)
+      .take(LIMIT);
+
+    const totalQueryBuilder = await this.surveyRepository
+      .createQueryBuilder('survey')
+      .where('survey.ownerId = :userId', { userId });
+
+    if (query.searchString.trim()) {
+      queryBuilder.andWhere('survey.title LIKE :searchString', {
+        searchString: `%${query.searchString}%`,
+      });
+      totalQueryBuilder.andWhere('survey.title LIKE :searchString', {
+        searchString: `%${query.searchString}%`,
+      });
+    }
+    if (query.status !== '0') {
+      const isAccepting = query.status === '1';
+      queryBuilder.andWhere('survey.isAccepting = :isAccepting', {
+        isAccepting: isAccepting,
+      });
+      totalQueryBuilder.andWhere('survey.isAccepting = :isAccepting', {
+        isAccepting: isAccepting,
+      });
+    }
+
+    const surveys = await queryBuilder.getMany();
+    const totalSurveys = await queryBuilder.getCount();
+
+    const nextCursor =
+      (pageParam + 1) * LIMIT < totalSurveys ? (pageParam + 1) * LIMIT : null;
+    return { surveys, nextCursor, totalSurveys };
   }
 }

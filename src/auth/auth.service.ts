@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { RegisterUserDTO, SigninUserDTO } from './DTO';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/user/Entity/user.entity';
@@ -21,7 +25,7 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async register(registerDTO: RegisterUserDTO) {
+  async signUp(registerDTO: RegisterUserDTO) {
     const hashedPassword = await argon.hash(registerDTO.password);
     const user = await this.userRepository.save({
       ...registerDTO,
@@ -74,19 +78,17 @@ export class AuthService {
       },
     });
     if (!user) {
-      throw new Error('Sai tài khoản hoặc mật khẩu');
+      throw new UnauthorizedException('Sai tài khoản hoặc mật khẩu');
     }
+
     const passwordMatched = await argon.verify(user.password, authDTO.password);
     if (!passwordMatched) {
-      throw new Error('Sai tài khoản hoặc mật khẩu');
+      throw new UnauthorizedException('Sai tài khoản hoặc mật khẩu');
     }
     const payload = { id: user.id, email: user.email };
     const { accessToken, refreshToken } = await this.generateToken(payload);
-    delete user.password;
-    delete user.refreshToken;
 
     return {
-      ...user,
       accessToken,
       refreshToken,
     };
@@ -148,8 +150,26 @@ export class AuthService {
     await this.userRepository.save(user);
   }
 
+  async refreshToken(refreshToken: string) {
+    const verify = await this.jwtService.verifyAsync(refreshToken, {
+      secret: this.configService.get('JWT_SECRET_REFRESH_TOKEN'),
+    });
+    const checkExistToken = await this.userRepository.findOne({
+      where: {
+        refreshToken: refreshToken,
+        email: verify.email,
+      },
+    });
+    if (checkExistToken) {
+      return this.generateToken({ id: verify.id, email: verify.email });
+    } else throw new UnauthorizedException('Refresh token is invalid');
+  }
+
   async generateToken(payload: { id: string; email: string }) {
-    const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get('JWT_SECRET_ACCESS_TOKEN'),
+      expiresIn: this.configService.get('EXPIRED_JWT_ACCESS_TOKEN'),
+    });
     const refreshToken = await this.jwtService.signAsync(payload, {
       secret: this.configService.get('JWT_SECRET_REFRESH_TOKEN'),
       expiresIn: this.configService.get('EXPIRED_JWT_REFRESH_TOKEN'),

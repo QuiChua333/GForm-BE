@@ -1,5 +1,6 @@
 import { Question } from 'src/question/Entity/question.entity';
 import { Response } from 'src/response/Entity/response';
+import { SurveyShare } from 'src/survey-share/Entity/survey_share';
 import { User } from 'src/user/Entity/user.entity';
 import {
   Column,
@@ -39,6 +40,9 @@ export class Survey {
 
   @OneToMany(() => Response, (response) => response.survey)
   responses: Response[];
+
+  @OneToMany(() => SurveyShare, (surveyShare) => surveyShare.survey)
+  surveyShares: SurveyShare[];
 
   @CreateDateColumn()
   create_at: Date;

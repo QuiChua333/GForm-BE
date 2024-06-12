@@ -36,10 +36,10 @@ export class QuestionService {
     private readonly surveyRepository: Repository<Survey>,
   ) {}
 
-  async changeQuestion(id: string, body: UpdateQuestionDTO) {
+  async changeQuestion(body: UpdateQuestionDTO) {
     const question = await this.questionRepository.findOne({
       where: {
-        id: id,
+        id: body.id,
       },
     });
 
@@ -249,7 +249,7 @@ export class QuestionService {
       relations: ['survey'],
     });
     let addQuestion = new Question();
-    addQuestion.question = '';
+    addQuestion.question = 'Câu hỏi';
     addQuestion.image = '';
     addQuestion.description = '';
     addQuestion.isHasDescription = false;

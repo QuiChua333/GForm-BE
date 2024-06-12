@@ -14,17 +14,10 @@ import { UpdateLinearScaleDTO } from './DTO/update-linear-scale.dto';
 export class LinearController {
   constructor(private readonly linearScaleService: LinearScaleService) {}
 
-  @Patch('changeLinearScale/:id')
-  async changeLinearScale(
-    @Res() res: Response,
-    @Param('id') id: string,
-    @Body() body: UpdateLinearScaleDTO,
-  ) {
+  @Patch('changeLinearScale')
+  async changeLinearScale(@Res() res: Response, @Body() body) {
     try {
-      const response = await this.linearScaleService.changeLinearScale(
-        id,
-        body,
-      );
+      const response = await this.linearScaleService.changeLinearScale(body);
       res.status(HttpStatus.OK).json({
         message: 'Update linear scale successfully',
         data: response,

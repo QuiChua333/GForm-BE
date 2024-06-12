@@ -1,3 +1,4 @@
+import { SurveyShare } from 'src/survey-share/Entity/survey_share';
 import { Survey } from 'src/survey/Entity/survey.entity';
 import {
   Column,
@@ -22,6 +23,9 @@ export class User {
   fullName: string;
 
   @Column({ nullable: true })
+  avatar: string;
+
+  @Column({ nullable: true })
   isAdmin: boolean;
 
   @Column() @Column({ nullable: true }) refreshToken: string;
@@ -31,6 +35,9 @@ export class User {
 
   @OneToMany(() => Survey, (survey) => survey.owner)
   surveys: Survey[];
+
+  @OneToMany(() => SurveyShare, (surveyShare) => surveyShare.user)
+  surveyShares: SurveyShare[];
 
   @CreateDateColumn()
   create_at: Date;

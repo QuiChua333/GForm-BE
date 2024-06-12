@@ -17,14 +17,10 @@ import { AddQuestionDTO } from './DTO/add-question.dto';
 export class QuestionController {
   constructor(private readonly questionService: QuestionService) {}
 
-  @Patch('changeQuestion/:id')
-  async changeQuestion(
-    @Res() res: Response,
-    @Param('id') id: string,
-    @Body() body: UpdateQuestionDTO,
-  ) {
+  @Patch('changeQuestion')
+  async changeQuestion(@Res() res: Response, @Body() body: UpdateQuestionDTO) {
     try {
-      const question = await this.questionService.changeQuestion(id, body);
+      const question = await this.questionService.changeQuestion(body);
       res.status(HttpStatus.OK).json({
         message: 'Update question successfully',
         data: question,
