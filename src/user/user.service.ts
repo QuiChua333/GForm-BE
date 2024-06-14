@@ -1,7 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './Entity/user.entity';
 import { Repository } from 'typeorm';
+import { UpdateUserDTO } from './DTO/update-user.dto';
+import * as argon from 'argon2';
 
 @Injectable()
 export class UserService {
@@ -17,5 +23,13 @@ export class UserService {
     delete user.password;
     delete user.refreshToken;
     return user;
+  }
+  async updateUser(userId: string, body: UpdateUserDTO) {
+    await this.userRepository.update(
+      {
+        id: userId,
+      },
+      body,
+    );
   }
 }

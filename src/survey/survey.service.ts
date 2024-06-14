@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { IsNull, Repository } from 'typeorm';
@@ -21,15 +25,32 @@ export class SurveyService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async getSurveyById(id: string) {
+  async getSurveyById(id: string, userId: string) {
     const survey = await this.surveyRepository.findOne({
       where: {
         id: id,
       },
+      relations: ['owner', 'surveyShares'],
     });
+    let isShareEdit: boolean = false;
+    let isOwner: boolean = true;
+    if (survey.owner.id !== userId) {
+      isOwner = false;
+      const user = await this.userRepository.findOne({
+        where: {
+          id: userId,
+        },
+      });
+      const surveyShare = survey.surveyShares.find(
+        (element) => element.email === user.email,
+      );
+      if (!surveyShare) throw new ForbiddenException('No permission');
+      console.log(surveyShare);
+      isShareEdit = surveyShare.isEdit;
+    }
     survey.questions = await this.getOrderedQuestions(id);
-
-    return survey;
+    console.log(isShareEdit);
+    return { ...survey, isOwner, isShareEdit };
   }
 
   async createSurvey(userId: string) {
@@ -130,7 +151,7 @@ export class SurveyService {
       .skip(pageParam * LIMIT)
       .take(LIMIT);
 
-    const totalQueryBuilder = await this.surveyRepository
+    const totalQueryBuilder = this.surveyRepository
       .createQueryBuilder('survey')
       .where('survey.ownerId = :userId', { userId });
 

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -149,7 +150,35 @@ export class AuthService {
     user.password = hashedPassword;
     await this.userRepository.save(user);
   }
+  async changePassword(
+    userId: string,
+    body: { newPassword: string; currentPassword: string },
+  ) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+    const passwordMatched = await argon.verify(
+      user.password,
+      body.currentPassword,
+    );
+    if (!passwordMatched) {
+      throw new BadRequestException('Sai mật khẩu');
+    }
+    const hashedPassword = await argon.hash(body.newPassword);
+    const payload = { id: user.id, email: user.email };
+    const { accessToken, refreshToken } = await this.generateToken(payload);
 
+    user.password = hashedPassword;
+    user.refreshToken = refreshToken;
+    await this.userRepository.save(user);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
   async refreshToken(refreshToken: string) {
     const verify = await this.jwtService.verifyAsync(refreshToken, {
       secret: this.configService.get('JWT_SECRET_REFRESH_TOKEN'),

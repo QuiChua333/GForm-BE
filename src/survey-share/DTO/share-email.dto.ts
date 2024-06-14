@@ -16,4 +16,7 @@ export class ShareEmailDTO {
 
   @IsOptional()
   message: string;
+
+  @IsNotEmpty()
+  linkEditSurvey: string;
 }

@@ -34,14 +34,14 @@ export class SurveyController {
     @Param('id') id: string,
   ) {
     try {
-      const survey = await this.surveyService.getSurveyById(id);
+      const { id: userId } = req.user;
+      const survey = await this.surveyService.getSurveyById(id, userId);
       res.status(HttpStatus.OK).json({
         message: 'Get current survey successfully',
         data: survey,
       });
     } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
+      res.status(error.status).json({
         message: error.message,
       });
     }

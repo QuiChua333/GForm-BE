@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Get,
   HttpStatus,
   Param,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -33,6 +35,31 @@ export class SurveyShareController {
       res.status(HttpStatus.OK).json({
         message: 'Share successfully',
         data: response,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @UseGuards(MyJwtGuard)
+  @Get('getSharedSurveysOfCurrentUser')
+  async getSharedSurveysOfCurrentUser(
+    @Req() req,
+    @Res() res: Response,
+    @Query() query,
+  ) {
+    try {
+      const userId = req.user.id;
+      const data = await this.surveyShareService.getSharedSurveysOfCurrentUser(
+        userId,
+        query,
+      );
+      res.status(HttpStatus.OK).json({
+        message: 'Get current survey successfully',
+        data: data,
       });
     } catch (error) {
       console.log(error);

@@ -16,6 +16,7 @@ import { AnswerModule } from './answer/answer.module';
 import { MultiChooseOptionModule } from './multi-choose-option/multi-choose-option.module';
 import { MultiChooseGridModule } from './multi-choose-grid/multi-choose-grid.module';
 import { SurveyShareModule } from './survey-share/survey-share.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { SurveyShareModule } from './survey-share/survey-share.module';
     MultiChooseOptionModule,
     MultiChooseGridModule,
     SurveyShareModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
 })

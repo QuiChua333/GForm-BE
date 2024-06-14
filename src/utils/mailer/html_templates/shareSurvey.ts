@@ -1,4 +1,18 @@
-<!doctype html>
+interface Props {
+  surveyTitle?: string;
+  message?: string;
+  linkEditSurvey: string;
+  ownerName: string;
+}
+
+const shareSurvey = ({
+  surveyTitle,
+  message,
+  linkEditSurvey,
+  ownerName,
+}: Props) => {
+  return `
+   <!Doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -27,11 +41,12 @@
       <tr>
         <td style="background-color: #ffffff; padding: 30px">
           <img src="https://i.ibb.co/CPZBhtp/GForm-logo.png" class="img" />
-          <h2>Cuộc chia sẻ khảo sát: Tên khảo sát</h2>
-          <p>Nhấn vào nút bên dưới để tham gia vào cuộc khảo sát của</p>
+          <h2>Cuộc chia sẻ khảo sát: ${surveyTitle}</h2>
+          <p>${message}</p>
+          <p>Nhấn vào nút bên dưới để tham gia vào cuộc khảo sát của ${ownerName}</p>
           <p style="text-align: center; margin-top: 30px">
             <a
-              href="${link}"
+              href="${linkEditSurvey}"
               style="
                 cursor: pointer;
                 display: inline-block;
@@ -49,3 +64,8 @@
     </table>
   </body>
 </html>
+
+      `;
+};
+
+export default shareSurvey;

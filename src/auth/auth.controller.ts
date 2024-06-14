@@ -4,12 +4,16 @@ import {
   Get,
   HttpStatus,
   Param,
+  Patch,
   Post,
+  Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { RegisterUserDTO, SigninUserDTO } from './DTO';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
+import { MyJwtGuard } from './guard/myjwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -137,6 +141,23 @@ export class AuthController {
       });
     } catch (error) {
       res.status(HttpStatus.UNAUTHORIZED).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @UseGuards(MyJwtGuard)
+  @Patch('changeUserPassword')
+  async changeUserPassword(@Res() res: Response, @Req() req, @Body() body) {
+    try {
+      const { id: userId } = req.user;
+      const user = await this.authService.changePassword(userId, body);
+      res.status(HttpStatus.OK).json({
+        message: 'Change password successfully',
+        data: user,
+      });
+    } catch (error) {
+      res.status(error.status).json({
         message: error.message,
       });
     }
