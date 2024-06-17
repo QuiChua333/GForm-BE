@@ -9,6 +9,7 @@ import { GColumn } from 'src/gcolumn/Entity/gcolumn';
 import { LinearScale } from 'src/linear_scale/Entity/linear_scale';
 import { Validation } from 'src/validation/Entity/validation.entity';
 import { Survey } from 'src/survey/Entity/survey.entity';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 
 @Module({
   controllers: [QuestionController],
@@ -23,6 +24,7 @@ import { Survey } from 'src/survey/Entity/survey.entity';
       Validation,
       Survey,
     ]),
+    CloudinaryModule,
   ],
 })
 export class QuestionModule {}

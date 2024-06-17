@@ -5,11 +5,14 @@ import {
   HttpStatus,
   Param,
   Post,
+  Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ResponseService } from './response.service';
 import { Response } from 'express';
 import { CreateResponseDTO } from './DTO/create-response.dto';
+import { MyJwtGuard } from 'src/auth/guard/myjwt.guard';
 
 @Controller('response')
 export class ResponseController {
@@ -36,11 +39,19 @@ export class ResponseController {
     }
   }
 
+  @UseGuards(MyJwtGuard)
   @Get('/getResponseSurvey/:id')
-  async getResponseSurvey(@Param('id') surveyId: string, @Res() res: Response) {
+  async getResponseSurvey(
+    @Param('id') surveyId: string,
+    @Res() res: Response,
+    @Req() req,
+  ) {
     try {
-      const newResponse =
-        await this.responseService.getResponseSurvey(surveyId);
+      const { id: userId } = req.user;
+      const newResponse = await this.responseService.getResponseSurvey(
+        surveyId,
+        userId,
+      );
       res.status(HttpStatus.OK).json({
         message: 'Get response survey successfully',
         data: newResponse,

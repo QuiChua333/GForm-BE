@@ -21,11 +21,26 @@ export class CloudinaryService {
     });
   }
 
+  uploadFromUrl(url: string): Promise<CloudinaryResponse> {
+    return new Promise<CloudinaryResponse>((resolve, reject) => {
+      cloudinary.uploader.upload(
+        url,
+        {
+          folder: process.env.CLOUDINARY_FOLDER_NAME,
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        },
+      );
+    });
+  }
+
   destroyFile(avatar: string): Promise<CloudinaryResponse> {
     const index = avatar.indexOf(process.env.CLOUDINARY_FOLDER_NAME);
     const indexOfDot = avatar.indexOf('.', index);
     const publicId = avatar.slice(index, indexOfDot);
-    console.log(publicId);
+    if (publicId === 'DEMO1/ekqfqrlfh0pu8ddfml9j') return;
     return new Promise((resolve, reject) => {
       cloudinary.uploader.destroy(publicId, (error, result) => {
         if (error) return reject(error);

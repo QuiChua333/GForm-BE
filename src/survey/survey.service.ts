@@ -12,6 +12,8 @@ import QuestionType from 'src/utils/interface/questionType';
 import { UpdateSurveyDTO } from './DTO/update-survey.dto';
 import { User } from 'src/user/Entity/user.entity';
 const LIMIT: number = 10;
+const defaultBackground =
+  'https://res.cloudinary.com/demo-golden/image/upload/v1718591862/DEMO1/ekqfqrlfh0pu8ddfml9j.jpg';
 @Injectable()
 export class SurveyService {
   constructor(
@@ -26,12 +28,14 @@ export class SurveyService {
   ) {}
 
   async getSurveyById(id: string, userId: string) {
-    const survey = await this.surveyRepository.findOne({
-      where: {
-        id: id,
-      },
-      relations: ['owner', 'surveyShares'],
-    });
+    const survey = await this.surveyRepository
+      .createQueryBuilder('survey')
+      .leftJoin('survey.owner', 'owner')
+      .leftJoinAndSelect('survey.surveyShares', 'surveyShares')
+      .addSelect(['owner.id', 'owner.fullName'])
+      .where('survey.id = :id', { id })
+      .getOne();
+
     let isShareEdit: boolean = false;
     let isOwner: boolean = true;
     if (survey.owner.id !== userId) {
@@ -45,11 +49,9 @@ export class SurveyService {
         (element) => element.email === user.email,
       );
       if (!surveyShare) throw new ForbiddenException('No permission');
-      console.log(surveyShare);
       isShareEdit = surveyShare.isEdit;
     }
     survey.questions = await this.getOrderedQuestions(id);
-    console.log(isShareEdit);
     return { ...survey, isOwner, isShareEdit };
   }
 
@@ -73,6 +75,7 @@ export class SurveyService {
     newQuestion.previousQuestionId = '';
     questions.push(newQuestion);
     newSurvey.questions = questions;
+    newSurvey.backgroundImage = defaultBackground;
     return await this.surveyRepository.save(newSurvey);
   }
 
@@ -156,11 +159,12 @@ export class SurveyService {
       .where('survey.ownerId = :userId', { userId });
 
     if (query.searchString.trim()) {
-      queryBuilder.andWhere('survey.title LIKE :searchString', {
-        searchString: `%${query.searchString}%`,
+      const searchString = query.searchString.trim().toLowerCase();
+      queryBuilder.andWhere('LOWER(survey.title) LIKE :searchString', {
+        searchString: `%${searchString}%`,
       });
-      totalQueryBuilder.andWhere('survey.title LIKE :searchString', {
-        searchString: `%${query.searchString}%`,
+      totalQueryBuilder.andWhere('LOWER(survey.title) LIKE :searchString', {
+        searchString: `%${searchString}%`,
       });
     }
     if (query.status !== '0') {
@@ -179,5 +183,74 @@ export class SurveyService {
     const nextCursor =
       (pageParam + 1) * LIMIT < totalSurveys ? (pageParam + 1) * LIMIT : null;
     return { surveys, nextCursor, totalSurveys };
+  }
+
+  async getSharedUserSurvey(surveyId: string, userId: string) {
+    const survey = await this.surveyRepository
+      .createQueryBuilder('survey')
+      .leftJoin('survey.owner', 'owner')
+      .leftJoinAndSelect('survey.surveyShares', 'surveyShares')
+      .leftJoin('surveyShares.user', 'user')
+      .addSelect(['owner.id', 'owner.fullName', 'owner.email', 'owner.avatar'])
+      .addSelect(['user.id', 'user.fullName', 'user.email', 'user.avatar'])
+      .where('survey.id = :id', { id: surveyId })
+      .getOne();
+    let isShareEdit: boolean = false;
+    let isOwner: boolean = true;
+    if (survey.owner.id !== userId) {
+      isOwner = false;
+      const user = await this.userRepository.findOne({
+        where: {
+          id: userId,
+        },
+      });
+      const surveyShare = survey.surveyShares.find(
+        (element) => element.email === user.email,
+      );
+      if (!surveyShare) throw new ForbiddenException('No permission');
+      isShareEdit = surveyShare.isEdit;
+    }
+    return {
+      surveyId: survey.id,
+      isOwner,
+      isShareEdit,
+      owner: {
+        ...survey.owner,
+      },
+      sharedUsers: [...survey.surveyShares].map((item) => {
+        return {
+          email: item.email,
+          isAccept: item.isAccept,
+          isEdit: item.isEdit,
+          sharedId: item.id,
+          userId: item.user?.id || '',
+          fullName: item.user?.fullName || '',
+          avatar: item.user?.avatar || '',
+        };
+      }),
+    };
+  }
+
+  async changeBackgroundSurvey(
+    surveyId: string,
+    body: { backgroundImage: string },
+  ) {
+    await this.surveyRepository.update(
+      {
+        id: surveyId,
+      },
+      body,
+    );
+  }
+
+  async checkOwner(userId: string, surveyId: string) {
+    const survey = await this.surveyRepository.findOne({
+      where: {
+        id: surveyId,
+      },
+      relations: ['owner'],
+    });
+    if (survey.owner.id !== userId)
+      throw new ForbiddenException('No permission');
   }
 }

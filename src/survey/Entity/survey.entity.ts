@@ -26,6 +26,11 @@ export class Survey {
   description: string;
 
   @Column({
+    nullable: true,
+  })
+  backgroundImage: string;
+
+  @Column({
     default: true,
   })
   isAccepting: boolean;

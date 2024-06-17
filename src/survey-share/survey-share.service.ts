@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { SurveyShare } from './Entity/survey_share';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -67,7 +71,16 @@ export class SurveyShareService {
       html: templateHTMLEmail,
       mailService: this.mailService,
     });
-    return await this.surveyShareRepository.save(surveyShare);
+    const response = await this.surveyShareRepository.save(surveyShare);
+    return {
+      email: surveyShare.email,
+      isAccept: surveyShare.isAccept,
+      isEdit: surveyShare.isEdit,
+      sharedId: response.id,
+      userId: surveyShare.user?.id,
+      fullName: surveyShare.user?.fullName,
+      avatar: surveyShare.user?.avatar,
+    };
   }
 
   async getSharedSurveysOfCurrentUser(
@@ -99,11 +112,12 @@ export class SurveyShareService {
       .where('surveyShare.email = :email', { email: user.email });
 
     if (query.searchString.trim()) {
-      queryBuilder.andWhere('survey.title LIKE :searchString', {
-        searchString: `%${query.searchString}%`,
+      const searchString = query.searchString.trim().toLowerCase();
+      queryBuilder.andWhere('LOWER(survey.title) LIKE :searchString', {
+        searchString: `%${searchString}%`,
       });
-      totalQueryBuilder.andWhere('survey.title LIKE :searchString', {
-        searchString: `%${query.searchString}%`,
+      totalQueryBuilder.andWhere('LOWER(survey.title) LIKE :searchString', {
+        searchString: `%${searchString}%`,
       });
     }
     if (query.status !== '0') {
@@ -134,13 +148,54 @@ export class SurveyShareService {
     surveys.forEach(async (element) => {
       if (!element.user) {
         element.user = user;
-        await this.surveyShareRepository.save(element);
       }
+      element.isAccept = true;
+      await this.surveyShareRepository.save(element);
     });
     const totalSurveys = await queryBuilder.getCount();
 
     const nextCursor =
       (pageParam + 1) * LIMIT < totalSurveys ? (pageParam + 1) * LIMIT : null;
     return { sharedSurveys, nextCursor, totalSurveys };
+  }
+
+  async changeEditSharedUser(
+    shareId: string,
+    userId: string,
+    body: { isEdit: boolean; surveyId: string },
+  ) {
+    const survey = await this.surveyRepository.findOne({
+      where: {
+        id: body.surveyId,
+      },
+      relations: ['owner'],
+    });
+    if (!survey) throw new BadRequestException('Khảo sát không tồn tại');
+    if (survey.owner.id !== userId)
+      throw new ForbiddenException('No permission');
+    const sharedSurvey = await this.surveyShareRepository.findOne({
+      where: {
+        id: shareId,
+      },
+    });
+    sharedSurvey.isEdit = body.isEdit;
+    await this.surveyShareRepository.save(sharedSurvey);
+    return {
+      isEdit: body.isEdit,
+      sharedId: shareId,
+    };
+  }
+
+  async deleteSharedSurvey(shareId: string, userId: string, surveyId: string) {
+    const survey = await this.surveyRepository.findOne({
+      where: {
+        id: surveyId,
+      },
+      relations: ['owner'],
+    });
+    if (!survey) throw new BadRequestException('Khảo sát không tồn tại');
+    if (survey.owner.id !== userId)
+      throw new ForbiddenException('No permission');
+    return await this.surveyShareRepository.delete(shareId);
   }
 }

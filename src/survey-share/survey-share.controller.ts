@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -64,6 +66,60 @@ export class SurveyShareController {
     } catch (error) {
       console.log(error);
       res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @UseGuards(MyJwtGuard)
+  @Patch(':id/changeEditSharedUser')
+  async changeEditSharedUser(
+    @Res() res: Response,
+    @Body() body: { isEdit: boolean; surveyId: string },
+    @Req() req,
+    @Param('id') sharedId: string,
+  ) {
+    try {
+      const { id: userId } = req.user;
+      const response = await this.surveyShareService.changeEditSharedUser(
+        sharedId,
+        userId,
+        body,
+      );
+      res.status(HttpStatus.OK).json({
+        message: 'Edit shared user successfully',
+        data: response,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(error.status).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @UseGuards(MyJwtGuard)
+  @Delete('survey/:surveyId/deleteSharedSurvey/:sharedId')
+  async deleteSharedSurvey(
+    @Res() res: Response,
+    @Req() req,
+    @Param('surveyId') surveyId: string,
+    @Param('sharedId') sharedId: string,
+  ) {
+    try {
+      const { id: userId } = req.user;
+      const response = await this.surveyShareService.deleteSharedSurvey(
+        sharedId,
+        userId,
+        surveyId,
+      );
+      res.status(HttpStatus.OK).json({
+        message: 'Delete shared user successfully',
+        data: response,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(error.status).json({
         message: error.message,
       });
     }

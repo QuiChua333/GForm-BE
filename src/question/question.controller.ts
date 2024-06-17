@@ -6,16 +6,26 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   Res,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { QuestionService } from './question.service';
 import { Response } from 'express';
 import { UpdateQuestionDTO } from './DTO/update-question.dto';
 import { AddQuestionDTO } from './DTO/add-question.dto';
+import { MyJwtGuard } from 'src/auth/guard/myjwt.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Controller('question')
 export class QuestionController {
-  constructor(private readonly questionService: QuestionService) {}
+  constructor(
+    private readonly questionService: QuestionService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Patch('changeQuestion')
   async changeQuestion(@Res() res: Response, @Body() body: UpdateQuestionDTO) {
@@ -105,6 +115,55 @@ export class QuestionController {
     } catch (error) {
       console.log(error);
       res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @UseGuards(MyJwtGuard)
+  @Patch(':questionId/changeImageQuestion')
+  @UseInterceptors(FileInterceptor('file'))
+  async changeImageQuestion(
+    @UploadedFile() file: Express.Multer.File,
+    @Res() res: Response,
+    @Body() body,
+    @Req() req,
+    @Param('questionId') questionId: string,
+  ) {
+    try {
+      const { currentImageQuestionUrl } = body;
+      if (currentImageQuestionUrl)
+        await this.cloudinaryService.destroyFile(currentImageQuestionUrl);
+      const response = await this.cloudinaryService.uploadFile(file);
+      const newUrl: string = response.secure_url;
+      await this.questionService.changeImageQuestion(questionId, {
+        image: newUrl,
+      });
+      res.status(HttpStatus.OK).json({
+        message: 'Change image question successfully',
+        data: newUrl,
+      });
+      return response;
+    } catch (error) {
+      res.status(error.status).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @UseGuards(MyJwtGuard)
+  @Patch(':questionId/removeImageQuestion')
+  async removeImageQuestion(
+    @Res() res: Response,
+    @Param('questionId') questionId: string,
+  ) {
+    try {
+      await this.questionService.removeImageQuestion(questionId);
+      res.status(HttpStatus.OK).json({
+        message: 'Remove image question successfully',
+      });
+    } catch (error) {
+      res.status(error.status).json({
         message: error.message,
       });
     }

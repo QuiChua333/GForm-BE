@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Response } from './Entity/response';
 import { Repository } from 'typeorm';
@@ -9,6 +9,7 @@ import { MultiChooseGrid } from 'src/multi-choose-grid/Entity/multiChooseGrid';
 import { Question } from 'src/question/Entity/question.entity';
 import { Survey } from 'src/survey/Entity/survey.entity';
 import QuestionResponseInterface from 'src/utils/interface/questionResponseInterface';
+import { User } from 'src/user/Entity/user.entity';
 
 @Injectable()
 export class ResponseService {
@@ -19,17 +20,14 @@ export class ResponseService {
     @InjectRepository(Answer)
     private readonly answerRepository: Repository<Answer>,
 
-    @InjectRepository(MultiChooseOption)
-    private readonly multiChooseOptionRepository: Repository<MultiChooseOption>,
-
-    @InjectRepository(MultiChooseGrid)
-    private readonly multiChooseGridRepository: Repository<MultiChooseGrid>,
-
     @InjectRepository(Question)
     private readonly questionRepository: Repository<Question>,
 
     @InjectRepository(Survey)
     private readonly surveyRepository: Repository<Survey>,
+
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async createResponse(body: CreateResponseDTO) {
@@ -121,12 +119,29 @@ export class ResponseService {
     return await this.responseRepository.save(newResponse);
   }
 
-  async getResponseSurvey(surveyId: string) {
-    const survey = await this.surveyRepository.findOne({
-      where: {
-        id: surveyId,
-      },
-    });
+  async getResponseSurvey(surveyId: string, userId: string) {
+    const survey = await this.surveyRepository
+      .createQueryBuilder('survey')
+      .leftJoin('survey.owner', 'owner')
+      .leftJoinAndSelect('survey.surveyShares', 'surveyShares')
+      .addSelect(['owner.id', 'owner.fullName'])
+      .where('survey.id = :id', { id: surveyId })
+      .getOne();
+    let isShareEdit: boolean = false;
+    let isOwner: boolean = true;
+    if (survey.owner.id !== userId) {
+      isOwner = false;
+      const user = await this.userRepository.findOne({
+        where: {
+          id: userId,
+        },
+      });
+      const surveyShare = survey.surveyShares.find(
+        (element) => element.email === user.email,
+      );
+      if (!surveyShare) throw new ForbiddenException('No permission');
+      isShareEdit = surveyShare.isEdit;
+    }
     const quantityOfResponses = await this.responseRepository.count({
       where: {
         survey: {
@@ -249,6 +264,8 @@ export class ResponseService {
       survey,
       quantityOfResponses,
       questionResponses,
+      isOwner,
+      isShareEdit,
     };
   }
 
