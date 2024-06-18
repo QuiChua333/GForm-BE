@@ -1,4 +1,6 @@
 import { Question } from 'src/question/Entity/question.entity';
+import { Response } from 'src/response/Entity/response';
+import { SurveyShare } from 'src/survey-share/Entity/survey_share';
 import { User } from 'src/user/Entity/user.entity';
 import {
   Column,
@@ -23,8 +25,15 @@ export class Survey {
   @Column()
   description: string;
 
-  @Column()
-  status: string;
+  @Column({
+    nullable: true,
+  })
+  backgroundImage: string;
+
+  @Column({
+    default: true,
+  })
+  isAccepting: boolean;
 
   @ManyToOne(() => User, (user) => user.surveys)
   owner: User;
@@ -33,6 +42,12 @@ export class Survey {
     cascade: true,
   })
   questions: Question[];
+
+  @OneToMany(() => Response, (response) => response.survey)
+  responses: Response[];
+
+  @OneToMany(() => SurveyShare, (surveyShare) => surveyShare.survey)
+  surveyShares: SurveyShare[];
 
   @CreateDateColumn()
   create_at: Date;

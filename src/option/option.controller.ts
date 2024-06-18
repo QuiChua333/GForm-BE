@@ -15,14 +15,10 @@ import { Response } from 'express';
 export class OptionController {
   constructor(private readonly optionService: OptionService) {}
 
-  @Patch('changeOption/:id')
-  async changeOption(
-    @Res() res: Response,
-    @Param('id') id: string,
-    @Body() body: { optionText: string },
-  ) {
+  @Patch('changeOption')
+  async changeOption(@Res() res: Response, @Body() body) {
     try {
-      const response = await this.optionService.changeOption(id, body);
+      const response = await this.optionService.changeOption(body);
       res.status(HttpStatus.OK).json({
         message: 'Update survey successfully',
         data: response,
@@ -35,14 +31,10 @@ export class OptionController {
     }
   }
 
-  @Post('addOption/:questionId')
-  async addOption(
-    @Res() res: Response,
-    @Param('questionId') questionId: string,
-    @Body() body: { optionText: string },
-  ) {
+  @Post('addOption')
+  async addOption(@Res() res: Response, @Body() body) {
     try {
-      const response = await this.optionService.addOption(questionId, body);
+      const response = await this.optionService.addOption(body);
       res.status(HttpStatus.OK).json({
         message: 'Update survey successfully',
         data: response,

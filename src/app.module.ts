@@ -11,6 +11,12 @@ import { ValidationnModule } from './validation/validation.module';
 import { LinearScaleModule } from './linear_scale/linear_scale.module';
 import { RowModule } from './row/row.module';
 import { GColumnModule } from './gcolumn/gcolumn.module';
+import { ResponseModule } from './response/response.module';
+import { AnswerModule } from './answer/answer.module';
+import { MultiChooseOptionModule } from './multi-choose-option/multi-choose-option.module';
+import { MultiChooseGridModule } from './multi-choose-grid/multi-choose-grid.module';
+import { SurveyShareModule } from './survey-share/survey-share.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -38,6 +44,12 @@ import { GColumnModule } from './gcolumn/gcolumn.module';
     LinearScaleModule,
     RowModule,
     GColumnModule,
+    ResponseModule,
+    AnswerModule,
+    MultiChooseOptionModule,
+    MultiChooseGridModule,
+    SurveyShareModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
 })

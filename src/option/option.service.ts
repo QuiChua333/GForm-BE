@@ -14,22 +14,22 @@ export class OptionService {
     private readonly questionRepository: Repository<Question>,
   ) {}
 
-  async changeOption(id: string, body: { optionText: string }) {
+  async changeOption(body: { optionText: string; id: string }) {
     const option = await this.optionRepository.findOne({
       where: {
-        id: id,
+        id: body.id,
       },
     });
     option.optionText = body.optionText ?? option.optionText;
 
     return await this.optionRepository.save(option);
   }
-  async addOption(questionId: string, body: { optionText: string }) {
+  async addOption(body: { optionText: string; questionId: string }) {
     const option = new Option();
     option.optionText = body.optionText;
     const question = await this.questionRepository.findOne({
       where: {
-        id: questionId,
+        id: body.questionId,
       },
     });
     option.question = question;

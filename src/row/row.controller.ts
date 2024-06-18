@@ -15,14 +15,10 @@ import { Response } from 'express';
 export class RowController {
   constructor(private readonly rowService: RowService) {}
 
-  @Patch('changeRow/:id')
-  async changeRow(
-    @Res() res: Response,
-    @Param('id') id: string,
-    @Body() body: { rowContent: string },
-  ) {
+  @Patch('changeRow')
+  async changeRow(@Res() res: Response, @Body() body) {
     try {
-      const response = await this.rowService.changeRow(id, body);
+      const response = await this.rowService.changeRow(body);
       res.status(HttpStatus.OK).json({
         message: 'Update row successfully',
         data: response,
@@ -35,14 +31,10 @@ export class RowController {
     }
   }
 
-  @Post('addRow/:questionId')
-  async addRow(
-    @Res() res: Response,
-    @Param('questionId') questionId: string,
-    @Body() body: { rowContent: string },
-  ) {
+  @Post('addRow')
+  async addRow(@Res() res: Response, @Body() body) {
     try {
-      const response = await this.rowService.addRow(questionId, body);
+      const response = await this.rowService.addRow(body);
       res.status(HttpStatus.OK).json({
         message: 'Update row successfully',
         data: response,

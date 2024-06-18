@@ -10,6 +10,7 @@ import { Option } from 'src/option/Entity/option.entity';
 import { LinearScale } from 'src/linear_scale/Entity/linear_scale';
 import { Validation } from 'src/validation/Entity/validation.entity';
 import { Survey } from 'src/survey/Entity/survey.entity';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class QuestionService {
@@ -34,12 +35,14 @@ export class QuestionService {
 
     @InjectRepository(Survey)
     private readonly surveyRepository: Repository<Survey>,
+
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  async changeQuestion(id: string, body: UpdateQuestionDTO) {
+  async changeQuestion(body: UpdateQuestionDTO) {
     const question = await this.questionRepository.findOne({
       where: {
-        id: id,
+        id: body.id,
       },
     });
 
@@ -48,17 +51,20 @@ export class QuestionService {
     question.isHasDescription =
       body.isHasDescription ?? question.isHasDescription;
     if (body.isHasDescription === false) question.description = '';
-    question.isRequired = body.isRequired ?? question.isRequired;
     question.isHasOther = body.isHasOther ?? question.isHasOther;
     question.isValidation = body.isValidation ?? question.isValidation;
-    question.questionType = body.questionType ?? question.questionType;
     if (body.questionType) {
-      const questionType = body.questionType;
-      switch (questionType) {
+      const oldQuestionType = question.questionType;
+      question.questionType = body.questionType;
+
+      switch (body.questionType) {
         case QuestionType.ShortAnswer:
 
         case QuestionType.Paragraph:
           {
+            if (oldQuestionType === QuestionType.Description) {
+              question.question = 'Câu hỏi';
+            }
             question.isValidation = false;
 
             if (question.validation) {
@@ -89,6 +95,9 @@ export class QuestionService {
           break;
         case QuestionType.Checkbox:
         case QuestionType.RadioButton: {
+          if (oldQuestionType === QuestionType.Description) {
+            question.question = 'Câu hỏi';
+          }
           question.isValidation = false;
 
           if (question.validation) {
@@ -119,6 +128,9 @@ export class QuestionService {
           break;
         }
         case QuestionType.Dropdown: {
+          if (oldQuestionType === QuestionType.Description) {
+            question.question = 'Câu hỏi';
+          }
           question.isValidation = false;
           if (question.validation) {
             await this.validationRepository.remove(question.validation);
@@ -144,11 +156,13 @@ export class QuestionService {
             const newOption = new Option();
             newOption.optionText = 'Lựa chọn 1';
             question.options = [newOption];
-            console.log(222);
           }
           break;
         }
         case QuestionType.LinearScale: {
+          if (oldQuestionType === QuestionType.Description) {
+            question.question = 'Câu hỏi';
+          }
           question.isValidation = false;
           if (question.validation) {
             await this.validationRepository.remove(question.validation);
@@ -179,6 +193,9 @@ export class QuestionService {
           break;
         }
         case QuestionType.RadioButtonGrid: {
+          if (oldQuestionType === QuestionType.Description) {
+            question.question = 'Câu hỏi';
+          }
           question.isValidation = false;
           if (question.validation) {
             await this.validationRepository.remove(question.validation);
@@ -206,6 +223,7 @@ export class QuestionService {
           break;
         }
         case QuestionType.Description: {
+          question.question = 'Tiêu đề';
           question.isValidation = false;
           if (question.validation) {
             await this.validationRepository.remove(question.validation);
@@ -236,6 +254,7 @@ export class QuestionService {
         }
       }
     }
+    question.isRequired = body.isRequired ?? question.isRequired;
 
     await this.questionRepository.save(question);
     return question;
@@ -249,7 +268,7 @@ export class QuestionService {
       relations: ['survey'],
     });
     let addQuestion = new Question();
-    addQuestion.question = '';
+    addQuestion.question = 'Câu hỏi';
     addQuestion.image = '';
     addQuestion.description = '';
     addQuestion.isHasDescription = false;
@@ -350,7 +369,6 @@ export class QuestionService {
       },
     });
     const newQuestion = await this.copyFrom(currentQuestion);
-    console.log(newQuestion);
     return newQuestion;
   }
   async deleteQuestion(questionId: string) {
@@ -359,6 +377,9 @@ export class QuestionService {
         id: questionId,
       },
     });
+    if (currentQuestion.image) {
+      await this.cloudinaryService.destroyFile(currentQuestion.image);
+    }
     if (
       !currentQuestion.previousQuestionId &&
       !currentQuestion.nextQuestionId
@@ -406,7 +427,6 @@ export class QuestionService {
     let newQuestion = new Question();
     newQuestion.question = question.question;
     newQuestion.description = question.description;
-    newQuestion.image = question.image;
     newQuestion.isRequired = question.isRequired;
     newQuestion.isHasDescription = question.isHasDescription;
     newQuestion.questionType = question.questionType;
@@ -415,7 +435,12 @@ export class QuestionService {
     newQuestion.survey = question.survey;
     newQuestion.nextQuestionId = '';
     newQuestion.previousQuestionId = '';
-
+    if (question.image) {
+      const response = await this.cloudinaryService.uploadFromUrl(
+        question.image,
+      );
+      newQuestion.image = response.secure_url;
+    }
     if (question.validation) {
       const validation = new Validation();
       validation.conditionName = question.validation.conditionName;
@@ -485,5 +510,26 @@ export class QuestionService {
       await this.questionRepository.save(nextQuestion);
       return await this.questionRepository.save(newQuestion);
     }
+  }
+
+  async changeImageQuestion(questionId: string, body: { image: string }) {
+    await this.questionRepository.update(
+      {
+        id: questionId,
+      },
+      body,
+    );
+  }
+  async removeImageQuestion(questionId: string) {
+    const question = await this.questionRepository.findOne({
+      where: {
+        id: questionId,
+      },
+    });
+    if (question.image) {
+      await this.cloudinaryService.destroyFile(question.image);
+      question.image = '';
+    }
+    await this.questionRepository.save(question);
   }
 }

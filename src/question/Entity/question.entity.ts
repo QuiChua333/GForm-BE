@@ -1,3 +1,4 @@
+import { Answer } from 'src/answer/Entity/answer';
 import { GColumn } from 'src/gcolumn/Entity/gcolumn';
 import { LinearScale } from 'src/linear_scale/Entity/linear_scale';
 import { Option } from 'src/option/Entity/option.entity';
@@ -27,7 +28,9 @@ export class Question {
   @Column()
   description: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   image: string;
 
   @Column()
@@ -59,6 +62,9 @@ export class Question {
     eager: true,
   })
   options: Option[];
+
+  @OneToMany(() => Answer, (answer) => answer.question)
+  answers: Answer[];
 
   @OneToMany(() => Row, (row) => row.question, {
     cascade: true,

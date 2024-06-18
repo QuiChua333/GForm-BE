@@ -14,10 +14,10 @@ export class RowService {
     private readonly questionRepository: Repository<Question>,
   ) {}
 
-  async changeRow(id: string, body: { rowContent: string }) {
+  async changeRow(body: { rowContent: string; id: string }) {
     const row = await this.rowRepository.findOne({
       where: {
-        id: id,
+        id: body.id,
       },
     });
     row.rowContent = body.rowContent ?? row.rowContent;
@@ -25,12 +25,12 @@ export class RowService {
     return await this.rowRepository.save(row);
   }
 
-  async addRow(questionId: string, body: { rowContent: string }) {
+  async addRow(body: { rowContent: string; questionId: string }) {
     const row = new Row();
     row.rowContent = body.rowContent;
     const question = await this.questionRepository.findOne({
       where: {
-        id: questionId,
+        id: body.questionId,
       },
     });
     row.question = question;

@@ -15,14 +15,10 @@ import { Response } from 'express';
 export class GColumnController {
   constructor(private readonly gcolumnService: GColumnService) {}
 
-  @Patch('changeGColumn/:id')
-  async changeGColumn(
-    @Res() res: Response,
-    @Param('id') id: string,
-    @Body() body: { gcolumnContent: string },
-  ) {
+  @Patch('changeGColumn')
+  async changeGColumn(@Res() res: Response, @Body() body) {
     try {
-      const response = await this.gcolumnService.changeGColumn(id, body);
+      const response = await this.gcolumnService.changeGColumn(body);
       res.status(HttpStatus.OK).json({
         message: 'Update gcolumn successfully',
         data: response,
@@ -35,14 +31,10 @@ export class GColumnController {
     }
   }
 
-  @Post('addGColumn/:questionId')
-  async addGColumn(
-    @Res() res: Response,
-    @Param('questionId') questionId: string,
-    @Body() body: { gcolumnContent: string },
-  ) {
+  @Post('addGColumn')
+  async addGColumn(@Res() res: Response, @Body() body) {
     try {
-      const response = await this.gcolumnService.addGColumn(questionId, body);
+      const response = await this.gcolumnService.addGColumn(body);
       res.status(HttpStatus.OK).json({
         message: 'Update gcolumn successfully',
         data: response,

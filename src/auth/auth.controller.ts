@@ -4,21 +4,25 @@ import {
   Get,
   HttpStatus,
   Param,
+  Patch,
   Post,
+  Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { RegisterUserDTO, SigninUserDTO } from './DTO';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
+import { MyJwtGuard } from './guard/myjwt.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register')
+  @Post('signUp')
   async register(@Body() body: RegisterUserDTO, @Res() res: Response) {
     try {
-      const tokenLinkPublic = await this.authService.register(body);
+      const tokenLinkPublic = await this.authService.signUp(body);
 
       res.status(HttpStatus.CREATED).json({
         message: 'Đăng ký tài khoản thành công',
@@ -64,7 +68,8 @@ export class AuthController {
         data: user,
       });
     } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json({
+      console.log(error);
+      res.status(HttpStatus.UNAUTHORIZED).json({
         message: error.message,
       });
     }
@@ -116,6 +121,43 @@ export class AuthController {
       });
     } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Post('refreshToken')
+  async refreshToken(
+    @Body() body: { refreshToken: string },
+    @Res() res: Response,
+  ) {
+    try {
+      const { accessToken, refreshToken } = await this.authService.refreshToken(
+        body.refreshToken,
+      );
+      res.status(HttpStatus.ACCEPTED).json({
+        message: 'Cập nhật mật khẩu thành công',
+        data: { accessToken, refreshToken },
+      });
+    } catch (error) {
+      res.status(HttpStatus.UNAUTHORIZED).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @UseGuards(MyJwtGuard)
+  @Patch('changeUserPassword')
+  async changeUserPassword(@Res() res: Response, @Req() req, @Body() body) {
+    try {
+      const { id: userId } = req.user;
+      const user = await this.authService.changePassword(userId, body);
+      res.status(HttpStatus.OK).json({
+        message: 'Change password successfully',
+        data: user,
+      });
+    } catch (error) {
+      res.status(error.status).json({
         message: error.message,
       });
     }

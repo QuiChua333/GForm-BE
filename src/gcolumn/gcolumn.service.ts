@@ -14,10 +14,10 @@ export class GColumnService {
     private readonly questionRepository: Repository<Question>,
   ) {}
 
-  async changeGColumn(id: string, body: { gcolumnContent: string }) {
+  async changeGColumn(body: { gcolumnContent: string; id: string }) {
     const gcolumn = await this.gcolumnRepository.findOne({
       where: {
-        id: id,
+        id: body.id,
       },
     });
     gcolumn.gcolumnContent = body.gcolumnContent ?? gcolumn.gcolumnContent;
@@ -25,12 +25,12 @@ export class GColumnService {
     return await this.gcolumnRepository.save(gcolumn);
   }
 
-  async addGColumn(questionId: string, body: { gcolumnContent: string }) {
+  async addGColumn(body: { gcolumnContent: string; questionId: string }) {
     const gcolumn = new GColumn();
     gcolumn.gcolumnContent = body.gcolumnContent;
     const question = await this.questionRepository.findOne({
       where: {
-        id: questionId,
+        id: body.questionId,
       },
     });
     gcolumn.question = question;
