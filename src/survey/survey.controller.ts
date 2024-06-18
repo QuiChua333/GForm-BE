@@ -54,6 +54,25 @@ export class SurveyController {
     }
   }
 
+  @Get('getPublicSurveyById/:id')
+  async getPublicSurveyById(
+    @Req() req,
+    @Res() res: Response,
+    @Param('id') id: string,
+  ) {
+    try {
+      const survey = await this.surveyService.getPublicSurveyById(id);
+      res.status(HttpStatus.OK).json({
+        message: 'Get survey successfully',
+        data: survey,
+      });
+    } catch (error) {
+      res.status(error.status).json({
+        message: error.message,
+      });
+    }
+  }
+
   @UseGuards(MyJwtGuard)
   @Post('createSurvey')
   async createSurvey(@Res() res: Response, @Req() req) {
@@ -140,7 +159,7 @@ export class SurveyController {
   async changeBackgroundSurvey(
     @UploadedFile() file: Express.Multer.File,
     @Res() res: Response,
-    @Body() body,
+    @Body() body: { currentBackgroundUrl: string },
     @Req() req,
     @Param('surveyId') surveyId: string,
   ) {
@@ -148,8 +167,10 @@ export class SurveyController {
       const { currentBackgroundUrl } = body;
       const { id: userId } = req.user;
       await this.surveyService.checkOwner(userId, surveyId);
-      if (currentBackgroundUrl)
+      if (currentBackgroundUrl) {
         await this.cloudinaryService.destroyFile(currentBackgroundUrl);
+      }
+
       const response = await this.cloudinaryService.uploadFile(file);
       const newUrl: string = response.secure_url;
       await this.surveyService.changeBackgroundSurvey(surveyId, {
@@ -161,7 +182,8 @@ export class SurveyController {
       });
       return response;
     } catch (error) {
-      res.status(error.status).json({
+      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
         message: error.message,
       });
     }

@@ -51,7 +51,6 @@ export class QuestionService {
     question.isHasDescription =
       body.isHasDescription ?? question.isHasDescription;
     if (body.isHasDescription === false) question.description = '';
-    question.isRequired = body.isRequired ?? question.isRequired;
     question.isHasOther = body.isHasOther ?? question.isHasOther;
     question.isValidation = body.isValidation ?? question.isValidation;
     if (body.questionType) {
@@ -255,6 +254,7 @@ export class QuestionService {
         }
       }
     }
+    question.isRequired = body.isRequired ?? question.isRequired;
 
     await this.questionRepository.save(question);
     return question;

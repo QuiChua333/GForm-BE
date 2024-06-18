@@ -63,9 +63,7 @@ export class Question {
   })
   options: Option[];
 
-  @OneToMany(() => Answer, (answer) => answer.question, {
-    eager: true,
-  })
+  @OneToMany(() => Answer, (answer) => answer.question)
   answers: Answer[];
 
   @OneToMany(() => Row, (row) => row.question, {

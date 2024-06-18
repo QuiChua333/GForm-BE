@@ -49,13 +49,11 @@ export class ResponseService {
         isHasResponseAnswer = true;
       }
 
-      if (tmpAnswer.singleOption) {
-        newAnswer.singleOption = tmpAnswer.singleOption;
+      if (tmpAnswer.isChooseOther) {
+        newAnswer.otherText = tmpAnswer.otherText.trim();
         isHasResponseAnswer = true;
-      }
-
-      if (tmpAnswer.otherText) {
-        newAnswer.otherText = tmpAnswer.otherText;
+      } else {
+        newAnswer.singleOption = tmpAnswer.singleOption;
         isHasResponseAnswer = true;
       }
 
@@ -204,15 +202,17 @@ export class ResponseService {
 
       questionResponse.textResponses = answers
         .map((answer) => answer.answerText)
-        .filter((text) => text !== null && text !== undefined);
+        .filter((text) => !!text);
 
       // Thống kê số lượng câu trả lời cho mỗi option
       questionResponse.optionReponses = options.map((option) => {
         const quantity = answers.filter(
           (answer) =>
-            answer.multiChooseOption.some((opt) => opt.option === option) ||
+            answer.multiChooseOption.some(
+              (opt) => opt.option === option && !!opt.option,
+            ) ||
             (answer.isChooseOther && answer.otherText === option) ||
-            answer.singleOption === option,
+            (answer.singleOption === option && !!answer.singleOption),
         ).length;
         return { optionContent: option, quantity };
       });

@@ -55,6 +55,16 @@ export class SurveyService {
     return { ...survey, isOwner, isShareEdit };
   }
 
+  async getPublicSurveyById(id: string) {
+    const survey = await this.surveyRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+    survey.questions = await this.getOrderedQuestions(id);
+    return survey;
+  }
+
   async createSurvey(userId: string) {
     const newSurvey = new Survey();
     newSurvey.ownerId = userId;
