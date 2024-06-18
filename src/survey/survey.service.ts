@@ -11,6 +11,8 @@ import { Question } from 'src/question/Entity/question.entity';
 import QuestionType from 'src/utils/interface/questionType';
 import { UpdateSurveyDTO } from './DTO/update-survey.dto';
 import { User } from 'src/user/Entity/user.entity';
+import { SurveyShare } from 'src/survey-share/Entity/survey_share';
+import { Response } from 'src/response/Entity/response';
 const LIMIT: number = 10;
 const defaultBackground =
   'https://res.cloudinary.com/demo-golden/image/upload/v1718591862/DEMO1/ekqfqrlfh0pu8ddfml9j.jpg';
@@ -25,6 +27,12 @@ export class SurveyService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    @InjectRepository(SurveyShare)
+    private readonly surveySharedRepository: Repository<SurveyShare>,
+
+    @InjectRepository(Response)
+    private readonly responseRepository: Repository<Response>,
   ) {}
 
   async getSurveyById(id: string, userId: string) {
@@ -262,5 +270,36 @@ export class SurveyService {
     });
     if (survey.owner.id !== userId)
       throw new ForbiddenException('No permission');
+  }
+
+  async deleteSurvey(userId: string, surveyId: string) {
+    const survey = await this.surveyRepository.findOne({
+      where: {
+        id: surveyId,
+      },
+      relations: ['owner'],
+    });
+
+    if (!survey) throw new BadRequestException('Not exist survey');
+    if (survey.owner.id !== userId) {
+      throw new ForbiddenException('No permission');
+    }
+    await this.questionRepository.delete({
+      survey: {
+        id: surveyId,
+      },
+    });
+    await this.surveySharedRepository.delete({
+      survey: {
+        id: surveyId,
+      },
+    });
+
+    await this.responseRepository.delete({
+      survey: {
+        id: surveyId,
+      },
+    });
+    await this.surveyRepository.delete(surveyId);
   }
 }

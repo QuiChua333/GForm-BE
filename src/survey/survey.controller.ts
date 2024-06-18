@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Param,
@@ -181,6 +182,27 @@ export class SurveyController {
         data: newUrl,
       });
       return response;
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @UseGuards(MyJwtGuard)
+  @Delete(':id')
+  async deleteSurvey(
+    @Req() req,
+    @Res() res: Response,
+    @Param('id') id: string,
+  ) {
+    try {
+      const userId = req.user.id;
+      const data = await this.surveyService.deleteSurvey(userId, id);
+      res.status(HttpStatus.OK).json({
+        message: 'Delete survey successfully',
+      });
     } catch (error) {
       console.log(error);
       res.status(HttpStatus.BAD_REQUEST).json({
