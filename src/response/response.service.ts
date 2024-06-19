@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Response } from './Entity/response';
 import { Repository } from 'typeorm';
@@ -10,6 +14,9 @@ import { Question } from 'src/question/Entity/question.entity';
 import { Survey } from 'src/survey/Entity/survey.entity';
 import QuestionResponseInterface from 'src/utils/interface/questionResponseInterface';
 import { User } from 'src/user/Entity/user.entity';
+import QuestionType from 'src/utils/interface/questionType';
+import * as ExcelJs from 'exceljs';
+import * as moment from 'moment';
 
 @Injectable()
 export class ResponseService {
@@ -155,6 +162,7 @@ export class ResponseService {
 
     // Duyệt qua từng câu hỏi
     for (const question of questions) {
+      if (question.questionType === QuestionType.Description) continue;
       // Tạo đối tượng response cho câu hỏi
       const questionResponse: QuestionResponseInterface = {
         questionId: question.id,
@@ -316,5 +324,99 @@ export class ResponseService {
     }
 
     return orderedQuestions;
+  }
+
+  async getDataToExportExcel(surveyId: string, userId: string) {
+    const survey = await this.surveyRepository.findOne({
+      where: {
+        id: surveyId,
+      },
+      relations: ['owner'],
+    });
+    if (!survey) throw new BadRequestException('Khảo sát không tồn tại');
+    if (survey.owner.id !== userId)
+      throw new ForbiddenException('Không có quyền truy cập');
+    const questions = await this.getOrderedQuestions(surveyId);
+
+    const workbook = new ExcelJs.Workbook();
+    const worksheet = workbook.addWorksheet('Survey Responses');
+    const headers: string[] = ['Thời gian submit'];
+
+    const questionsResponse = questions.filter(
+      (question) => question.questionType !== QuestionType.Description,
+    );
+
+    questionsResponse.forEach((question) => {
+      if (question.rows.length > 0 && question.gcolumns.length > 0) {
+        question.rows.forEach((row) => {
+          headers.push(row.rowContent);
+        });
+      } else {
+        headers.push(question.question);
+      }
+    });
+
+    worksheet.addRow(headers);
+
+    const responses = await this.responseRepository.find({
+      where: {
+        survey: {
+          id: surveyId,
+        },
+      },
+      relations: [
+        'answers',
+        'answers.question',
+        'answers.multiChooseOption',
+        'answers.multiChooseGrid',
+      ],
+    });
+
+    responses.forEach((response) => {
+      const formattedSubmitTime = moment(response.submissionDate).format(
+        'MM/DD/YYYY HH:mm:ss',
+      );
+      const rowData: string[] = [formattedSubmitTime];
+      questionsResponse.forEach((question) => {
+        const answer = response.answers.find(
+          (ans) => ans.question.id === question.id,
+        );
+
+        if (answer) {
+          if (question.rows.length > 0 && question.gcolumns.length > 0) {
+            question.rows.forEach((row) => {
+              const cellValue =
+                answer.multiChooseGrid.find(
+                  (grid) => grid.row === row.rowContent,
+                )?.gcolumn || '';
+              rowData.push(cellValue);
+            });
+          } else if (answer.multiChooseOption.length > 0) {
+            const options = answer.multiChooseOption
+              .map((option) => option.option)
+              .join(', ');
+            rowData.push(options);
+          } else {
+            rowData.push(
+              answer.answerText ||
+                answer.singleOption ||
+                answer.otherText ||
+                answer.linearValue + '' ||
+                '',
+            );
+          }
+        } else {
+          rowData.push('');
+        }
+      });
+
+      worksheet.addRow(rowData);
+    });
+    for (let i = 1; i <= headers.length; i++) {
+      worksheet.getColumn(i).width = 20;
+    }
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    return buffer;
   }
 }
