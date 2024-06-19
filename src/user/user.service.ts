@@ -20,9 +20,14 @@ export class UserService {
         id: userId,
       },
     });
+
+    const hasPassword = user.password ? true : false;
     delete user.password;
     delete user.refreshToken;
-    return user;
+    return {
+      ...user,
+      hasPassword,
+    };
   }
   async updateUser(userId: string, body: UpdateUserDTO) {
     await this.userRepository.update(

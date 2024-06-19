@@ -14,6 +14,7 @@ import { RegisterUserDTO, SigninUserDTO } from './DTO';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { MyJwtGuard } from './guard/myjwt.guard';
+import { GoogleGuard } from './guard/google.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -66,6 +67,25 @@ export class AuthController {
       res.status(HttpStatus.OK).json({
         message: 'Đăng nhập thành công',
         data: user,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.UNAUTHORIZED).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @Post('signinGoogle')
+  async signinGoogle(
+    @Body() body: { tokenFirebase: string },
+    @Res() res: Response,
+  ) {
+    try {
+      const data = await this.authService.signInGoogle(body.tokenFirebase);
+      res.status(HttpStatus.OK).json({
+        message: 'Đăng nhập thành công',
+        data: data,
       });
     } catch (error) {
       console.log(error);
@@ -155,6 +175,23 @@ export class AuthController {
       res.status(HttpStatus.OK).json({
         message: 'Change password successfully',
         data: user,
+      });
+    } catch (error) {
+      res.status(error.status).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @UseGuards(MyJwtGuard)
+  @Patch('setUserPassword')
+  async setUserPassword(@Res() res: Response, @Req() req, @Body() body) {
+    try {
+      const { id: userId } = req.user;
+      const data = await this.authService.setPassword(userId, body);
+      res.status(HttpStatus.OK).json({
+        message: 'Set password successfully',
+        data: data,
       });
     } catch (error) {
       res.status(error.status).json({

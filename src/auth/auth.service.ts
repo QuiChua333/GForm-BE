@@ -15,6 +15,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import emailVerification from 'src/utils/mailer/html_templates/emailVerification';
 import { ConfigService } from '@nestjs/config';
 import resetPassword from 'src/utils/mailer/html_templates/resetPassword';
+import { FirebaseService } from 'src/firebase/firebase.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,8 @@ export class AuthService {
 
     private jwtService: JwtService,
     private readonly configService: ConfigService,
+
+    private readonly firebaseService: FirebaseService,
   ) {}
 
   async signUp(registerDTO: RegisterUserDTO) {
@@ -87,6 +90,36 @@ export class AuthService {
       throw new UnauthorizedException('Sai tài khoản hoặc mật khẩu');
     }
     const payload = { id: user.id, email: user.email };
+    const { accessToken, refreshToken } = await this.generateToken(payload);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async signInGoogle(tokenFirebase: string) {
+    const decodedToken =
+      await this.firebaseService.verifyIdToken(tokenFirebase);
+    const { name, email } = decodedToken;
+    const user = await this.userRepository.findOne({
+      where: {
+        email: email,
+      },
+    });
+    let userLogin: User;
+    if (!user) {
+      userLogin = await this.userRepository.save({
+        email: email,
+        fullName: name,
+        isAdmin: false,
+        isVerifiedEmail: true,
+      });
+    } else {
+      userLogin = user;
+    }
+
+    const payload = { id: userLogin.id, email: userLogin.email };
     const { accessToken, refreshToken } = await this.generateToken(payload);
 
     return {
@@ -179,6 +212,28 @@ export class AuthService {
       refreshToken,
     };
   }
+
+  async setPassword(userId: string, body: { newPassword: string }) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+
+    const hashedPassword = await argon.hash(body.newPassword);
+    const payload = { id: user.id, email: user.email };
+    const { accessToken, refreshToken } = await this.generateToken(payload);
+
+    user.password = hashedPassword;
+    user.refreshToken = refreshToken;
+    await this.userRepository.save(user);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
   async refreshToken(refreshToken: string) {
     const verify = await this.jwtService.verifyAsync(refreshToken, {
       secret: this.configService.get('JWT_SECRET_REFRESH_TOKEN'),

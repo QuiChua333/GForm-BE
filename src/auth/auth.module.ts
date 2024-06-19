@@ -7,6 +7,9 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { User } from 'src/user/Entity/user.entity';
 import { JwtStrategy } from './strategy/jwt.strategy';
+import { GoogleStrategy } from './strategy/google.strategy';
+import { FirebaseModule } from 'src/firebase/firebase.module';
+import { FirebaseService } from 'src/firebase/firebase.service';
 
 @Module({
   imports: [
@@ -37,8 +40,9 @@ import { JwtStrategy } from './strategy/jwt.strategy';
         },
       }),
     }),
+    FirebaseModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, FirebaseService],
 })
 export class AuthModule {}
