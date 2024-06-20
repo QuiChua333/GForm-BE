@@ -63,4 +63,33 @@ export class ResponseController {
       });
     }
   }
+
+  @UseGuards(MyJwtGuard)
+  @Get('dataExportResponse/:surveyId')
+  async getDataToExportExcel(
+    @Param('surveyId') surveyId: string,
+    @Res() res: Response,
+    @Req() req,
+  ) {
+    try {
+      const { id: userId } = req.user;
+      const data = await this.responseService.getDataToExportExcel(
+        surveyId,
+        userId,
+      );
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename=SurveyResponses.xlsx',
+      );
+      res.status(HttpStatus.OK).send(data);
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({
+        message: error.message,
+      });
+    }
+  }
 }

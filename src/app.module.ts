@@ -36,9 +36,9 @@ import { FirebaseModule } from './firebase/firebase.module';
         entities: [],
         synchronize: true,
         autoLoadEntities: true,
-        ssl: {
-          rejectUnauthorized: false,
-        },
+        // ssl: {
+        //   rejectUnauthorized: false,
+        // },
       }),
       inject: [],
     }),
