@@ -14,7 +14,6 @@ import { RegisterUserDTO, SigninUserDTO } from './DTO';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { MyJwtGuard } from './guard/myjwt.guard';
-import { GoogleGuard } from './guard/google.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -76,7 +75,7 @@ export class AuthController {
     }
   }
 
-  @Post('signinGoogle')
+  @Post('sign-in/google')
   async signinGoogle(
     @Body() body: { tokenFirebase: string },
     @Res() res: Response,
@@ -184,11 +183,11 @@ export class AuthController {
   }
 
   @UseGuards(MyJwtGuard)
-  @Patch('setUserPassword')
-  async setUserPassword(@Res() res: Response, @Req() req, @Body() body) {
+  @Post('password')
+  async createUserPassword(@Res() res: Response, @Req() req, @Body() body) {
     try {
       const { id: userId } = req.user;
-      const data = await this.authService.setPassword(userId, body);
+      const data = await this.authService.createUserPassword(userId, body);
       res.status(HttpStatus.OK).json({
         message: 'Set password successfully',
         data: data,
