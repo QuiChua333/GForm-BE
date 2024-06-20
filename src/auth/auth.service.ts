@@ -218,7 +218,7 @@ export class AuthService {
     };
   }
 
-  async createUserPassword(userId: string, body: { newPassword: string }) {
+  async updatePassword(userId: string, body: { newPassword: string }) {
     const user = await this.userRepository.findOne({
       where: {
         id: userId,

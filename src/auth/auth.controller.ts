@@ -183,11 +183,11 @@ export class AuthController {
   }
 
   @UseGuards(MyJwtGuard)
-  @Post('password')
-  async createUserPassword(@Res() res: Response, @Req() req, @Body() body) {
+  @Patch('password')
+  async updatePassword(@Res() res: Response, @Req() req, @Body() body) {
     try {
       const { id: userId } = req.user;
-      const data = await this.authService.createUserPassword(userId, body);
+      const data = await this.authService.updatePassword(userId, body);
       res.status(HttpStatus.OK).json({
         message: 'Set password successfully',
         data: data,
