@@ -21,12 +21,12 @@ export class UserService {
       },
     });
 
-    const hasPassword = user.password ? true : false;
+    const isGoogleAccount = user.password ? false : true;
     delete user.password;
     delete user.refreshToken;
     return {
       ...user,
-      hasPassword,
+      isGoogleAccount,
     };
   }
   async updateUser(userId: string, body: UpdateUserDTO) {

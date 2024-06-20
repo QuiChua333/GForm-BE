@@ -107,19 +107,20 @@ export class AuthService {
         email: email,
       },
     });
-    let userLogin: User;
+    let responsedUser: User;
+
     if (!user) {
-      userLogin = await this.userRepository.save({
-        email: email,
+      responsedUser = await this.userRepository.save({
+        email,
         fullName: name,
         isAdmin: false,
         isVerifiedEmail: true,
       });
     } else {
-      userLogin = user;
+      responsedUser = user;
     }
 
-    const payload = { id: userLogin.id, email: userLogin.email };
+    const payload = { id: responsedUser.id, email: responsedUser.email };
     const { accessToken, refreshToken } = await this.generateToken(payload);
 
     return {
@@ -133,7 +134,9 @@ export class AuthService {
         email: email,
       },
     });
+
     if (!user) throw new Error('Email không tồn tại');
+
     const tokenLinkResetPassword = await this.jwtService.signAsync(
       {
         email: user.email,
@@ -163,7 +166,9 @@ export class AuthService {
         email: payload.email,
       },
     });
+
     if (!user) throw new Error('Email không tồn tại');
+
     return user.email;
   }
 
@@ -213,7 +218,7 @@ export class AuthService {
     };
   }
 
-  async setPassword(userId: string, body: { newPassword: string }) {
+  async updatePassword(userId: string, body: { newPassword: string }) {
     const user = await this.userRepository.findOne({
       where: {
         id: userId,
