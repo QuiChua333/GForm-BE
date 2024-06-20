@@ -75,6 +75,25 @@ export class AuthController {
     }
   }
 
+  @Post('sign-in/google')
+  async signinGoogle(
+    @Body() body: { tokenFirebase: string },
+    @Res() res: Response,
+  ) {
+    try {
+      const data = await this.authService.signInGoogle(body.tokenFirebase);
+      res.status(HttpStatus.OK).json({
+        message: 'Đăng nhập thành công',
+        data: data,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(HttpStatus.UNAUTHORIZED).json({
+        message: error.message,
+      });
+    }
+  }
+
   @Get('checkExistEmail/:email')
   async checkExistEmail(@Param('email') email: string, @Res() res: Response) {
     try {
@@ -155,6 +174,23 @@ export class AuthController {
       res.status(HttpStatus.OK).json({
         message: 'Change password successfully',
         data: user,
+      });
+    } catch (error) {
+      res.status(error.status).json({
+        message: error.message,
+      });
+    }
+  }
+
+  @UseGuards(MyJwtGuard)
+  @Patch('password')
+  async updatePassword(@Res() res: Response, @Req() req, @Body() body) {
+    try {
+      const { id: userId } = req.user;
+      const data = await this.authService.updatePassword(userId, body);
+      res.status(HttpStatus.OK).json({
+        message: 'Set password successfully',
+        data: data,
       });
     } catch (error) {
       res.status(error.status).json({

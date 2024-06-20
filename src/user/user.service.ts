@@ -20,9 +20,14 @@ export class UserService {
         id: userId,
       },
     });
+
+    const isGoogleAccount = user.password ? false : true;
     delete user.password;
     delete user.refreshToken;
-    return user;
+    return {
+      ...user,
+      isGoogleAccount,
+    };
   }
   async updateUser(userId: string, body: UpdateUserDTO) {
     await this.userRepository.update(

@@ -15,6 +15,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import emailVerification from 'src/utils/mailer/html_templates/emailVerification';
 import { ConfigService } from '@nestjs/config';
 import resetPassword from 'src/utils/mailer/html_templates/resetPassword';
+import { FirebaseService } from 'src/firebase/firebase.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,8 @@ export class AuthService {
 
     private jwtService: JwtService,
     private readonly configService: ConfigService,
+
+    private readonly firebaseService: FirebaseService,
   ) {}
 
   async signUp(registerDTO: RegisterUserDTO) {
@@ -94,13 +97,46 @@ export class AuthService {
       refreshToken,
     };
   }
+
+  async signInGoogle(tokenFirebase: string) {
+    const decodedToken =
+      await this.firebaseService.verifyIdToken(tokenFirebase);
+    const { name, email } = decodedToken;
+    const user = await this.userRepository.findOne({
+      where: {
+        email: email,
+      },
+    });
+    let responsedUser: User;
+
+    if (!user) {
+      responsedUser = await this.userRepository.save({
+        email,
+        fullName: name,
+        isAdmin: false,
+        isVerifiedEmail: true,
+      });
+    } else {
+      responsedUser = user;
+    }
+
+    const payload = { id: responsedUser.id, email: responsedUser.email };
+    const { accessToken, refreshToken } = await this.generateToken(payload);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
   async checkExistEmail(email: string) {
     const user = await this.userRepository.findOne({
       where: {
         email: email,
       },
     });
+
     if (!user) throw new Error('Email không tồn tại');
+
     const tokenLinkResetPassword = await this.jwtService.signAsync(
       {
         email: user.email,
@@ -130,7 +166,9 @@ export class AuthService {
         email: payload.email,
       },
     });
+
     if (!user) throw new Error('Email không tồn tại');
+
     return user.email;
   }
 
@@ -179,6 +217,28 @@ export class AuthService {
       refreshToken,
     };
   }
+
+  async updatePassword(userId: string, body: { newPassword: string }) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+
+    const hashedPassword = await argon.hash(body.newPassword);
+    const payload = { id: user.id, email: user.email };
+    const { accessToken, refreshToken } = await this.generateToken(payload);
+
+    user.password = hashedPassword;
+    user.refreshToken = refreshToken;
+    await this.userRepository.save(user);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
   async refreshToken(refreshToken: string) {
     const verify = await this.jwtService.verifyAsync(refreshToken, {
       secret: this.configService.get('JWT_SECRET_REFRESH_TOKEN'),

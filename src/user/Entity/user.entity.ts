@@ -16,7 +16,9 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   password: string;
 
   @Column()
@@ -27,6 +29,9 @@ export class User {
 
   @Column({ nullable: true })
   isAdmin: boolean;
+
+  @Column({ nullable: true })
+  isGoogleAccount: boolean;
 
   @Column() @Column({ nullable: true }) refreshToken: string;
 
