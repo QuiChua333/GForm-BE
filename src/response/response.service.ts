@@ -340,7 +340,7 @@ export class ResponseService {
 
     const workbook = new ExcelJs.Workbook();
     const worksheet = workbook.addWorksheet('Survey Responses');
-    const headers: string[] = ['Thời gian submit'];
+    const headers: string[] = ['Submission date'];
 
     const questionsResponse = questions.filter(
       (question) => question.questionType !== QuestionType.Description,
