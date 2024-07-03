@@ -30,8 +30,6 @@ export class User extends BaseEntity {
   @Column({ default: false })
   isGoogleAccount: boolean;
 
-  @Column() @Column({ nullable: true }) refreshToken: string;
-
   @Column({ default: false })
   isVerifiedEmail: boolean;
 

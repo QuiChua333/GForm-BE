@@ -23,8 +23,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "ts-node -r tsconfig-paths/register  --transpile-only ./node_modules/typeorm/cli -d ormconfig.ts",
     "migrate:create": "ts-node ./node_modules/typeorm/cli.js migration:create",
-    "migrate:up": "yarn run typeorm migration:run",
-    "migrate:down": "yarn run typeorm migration:revert"
+    "migrate:up": "npm run typeorm migration:run",
+    "migrate:down": "npm run typeorm migration:revert"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",
@@ -56,7 +56,8 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "streamifier": "^0.1.1",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "typeorm-naming-strategies": "^4.1.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
