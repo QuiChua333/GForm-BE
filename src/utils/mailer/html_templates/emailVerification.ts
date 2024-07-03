@@ -1,4 +1,4 @@
-const emailVerification = (link: string) => {
+const emailVerification = (url: string) => {
   return `
   <!Doctype html>
   <html lang="en">
@@ -35,7 +35,7 @@ const emailVerification = (link: string) => {
             </p>
             <p style="text-align: center; margin-top: 30px">
               <a
-                href="${link}"
+                href="${url}"
                 style="
                   cursor: pointer;
                   display: inline-block;

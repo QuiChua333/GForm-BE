@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryResponse } from './cloudinary-response';
+import { UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
 import * as streamifier from 'streamifier';
 
+export type CloudinaryResponse = UploadApiResponse | UploadApiErrorResponse;
 @Injectable()
 export class CloudinaryService {
   uploadFile(file: Express.Multer.File): Promise<CloudinaryResponse> {

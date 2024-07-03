@@ -3,13 +3,14 @@ import { MailerService } from '@nestjs-modules/mailer';
 interface MailObjectInterface {
   email: string;
   subject: string;
-  text?: string;
+  text: string;
   html?: string;
   mailService: MailerService;
 }
 const sendMail = async ({
   email,
   subject,
+
   text,
   html,
   mailService,
