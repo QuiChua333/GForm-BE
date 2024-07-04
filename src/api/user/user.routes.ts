@@ -13,14 +13,14 @@ export default {
   },
 
   changeUserAvatar: <IRouteParams>{
-    path: '/user-avatar',
+    path: '/avatar',
     jwtSecure: true,
     code: HttpStatus.OK,
     method: RequestMethod.PUT,
   },
 
   changeUserName: <IRouteParams>{
-    path: '/user-name',
+    path: '/name',
     jwtSecure: true,
     code: HttpStatus.OK,
     method: RequestMethod.PUT,

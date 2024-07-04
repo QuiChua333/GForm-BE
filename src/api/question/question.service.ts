@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { Question } from './Entity/question.entity';
+import { Question } from './entities/question.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateQuestionDTO } from './DTO/update-question.dto';
 import QuestionType from 'src/utils/interface/questionType';
-import { Row } from '@/api/row/Entity/row';
-import { GColumn } from '@/api/gcolumn/Entity/gcolumn';
-import { Option } from '@/api/option/Entity/option.entity';
-import { LinearScale } from '@/api/linear_scale/Entity/linear_scale';
-import { Validation } from '@/api/validation/Entity/validation.entity';
-import { Survey } from '@/api/survey/Entity/survey.entity';
+import { Row } from '../row/entities';
+import { GColumn } from '../gcolumn/entities';
+import { Option } from '@/api/option/entities/option.entity';
+import { LinearScale } from '../linear-scale/entities';
+import { Validation } from '../validation/entities';
+import { Survey } from '../survey/entities';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
@@ -358,13 +358,13 @@ export class QuestionService {
       relations: ['survey'],
       order: {
         options: {
-          create_at: 'ASC',
+          createdAt: 'ASC',
         },
         rows: {
-          create_at: 'ASC',
+          createdAt: 'ASC',
         },
         gcolumns: {
-          create_at: 'ASC',
+          createdAt: 'ASC',
         },
       },
     });

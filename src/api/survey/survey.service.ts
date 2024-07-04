@@ -6,13 +6,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { IsNull, Repository } from 'typeorm';
-import { Survey } from './Entity/survey.entity';
-import { Question } from '@/api/question/Entity/question.entity';
+import { Survey } from './entities/survey.entity';
+import { Question } from '@/api/question/entities/question.entity';
 import QuestionType from 'src/utils/interface/questionType';
 import { UpdateSurveyDTO } from './DTO/update-survey.dto';
 import { User } from '@/api/user/entities/user.entity';
-import { SurveyShare } from '@/api/survey-share/Entity/survey_share';
-import { Response } from '@/api/response/Entity/response';
+import { SurveyShare } from '../survey-share/entities';
+import { Response } from '../response/entities';
 const LIMIT: number = 10;
 const defaultBackground =
   'https://res.cloudinary.com/demo-golden/image/upload/v1718591862/DEMO1/ekqfqrlfh0pu8ddfml9j.jpg';
@@ -74,8 +74,14 @@ export class SurveyService {
   }
 
   async createSurvey(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
     const newSurvey = new Survey();
-    newSurvey.ownerId = userId;
+    newSurvey.ownerIdString = userId;
+    newSurvey.owner = user;
     newSurvey.description = '';
     newSurvey.title = 'Tiêu đề khảo sát';
     newSurvey.isAccepting = true;
@@ -119,15 +125,15 @@ export class SurveyService {
         previousQuestionId: '',
       },
       order: {
-        create_at: 'ASC',
+        createdAt: 'ASC',
         options: {
-          create_at: 'ASC',
+          createdAt: 'ASC',
         },
         rows: {
-          create_at: 'ASC',
+          createdAt: 'ASC',
         },
         gcolumns: {
-          create_at: 'ASC',
+          createdAt: 'ASC',
         },
       },
     });
@@ -138,15 +144,15 @@ export class SurveyService {
         firstQuestion = await this.questionRepository.findOne({
           where: { id: firstQuestion.nextQuestionId },
           order: {
-            create_at: 'ASC',
+            createdAt: 'ASC',
             options: {
-              create_at: 'ASC',
+              createdAt: 'ASC',
             },
             rows: {
-              create_at: 'ASC',
+              createdAt: 'ASC',
             },
             gcolumns: {
-              create_at: 'ASC',
+              createdAt: 'ASC',
             },
           },
         });
@@ -165,16 +171,16 @@ export class SurveyService {
 
     const queryBuilder = this.surveyRepository
       .createQueryBuilder('survey')
-      .where('survey.ownerId = :userId', { userId })
+      .where('survey.owner_id = :userId', { userId })
       .loadRelationCountAndMap('survey.questionsCount', 'survey.questions')
       .loadRelationCountAndMap('survey.responsesCount', 'survey.responses')
-      .orderBy('survey.create_at', 'DESC')
+      .orderBy('survey.created_at', 'DESC')
       .skip(pageParam * LIMIT)
       .take(LIMIT);
 
     const totalQueryBuilder = this.surveyRepository
       .createQueryBuilder('survey')
-      .where('survey.ownerId = :userId', { userId });
+      .where('survey.owner_id = :userId', { userId });
 
     if (query.searchString.trim()) {
       const searchString = query.searchString.trim().toLowerCase();
@@ -187,10 +193,10 @@ export class SurveyService {
     }
     if (query.status !== '0') {
       const isAccepting = query.status === '1';
-      queryBuilder.andWhere('survey.isAccepting = :isAccepting', {
+      queryBuilder.andWhere('survey.is_accepting = :isAccepting', {
         isAccepting: isAccepting,
       });
-      totalQueryBuilder.andWhere('survey.isAccepting = :isAccepting', {
+      totalQueryBuilder.andWhere('survey.is_accepting = :isAccepting', {
         isAccepting: isAccepting,
       });
     }
@@ -209,8 +215,8 @@ export class SurveyService {
       .leftJoin('survey.owner', 'owner')
       .leftJoinAndSelect('survey.surveyShares', 'surveyShares')
       .leftJoin('surveyShares.user', 'user')
-      .addSelect(['owner.id', 'owner.fullName', 'owner.email', 'owner.avatar'])
-      .addSelect(['user.id', 'user.fullName', 'user.email', 'user.avatar'])
+      .addSelect(['owner.id', 'owner.full_name', 'owner.email', 'owner.avatar'])
+      .addSelect(['user.id', 'user.full_name', 'user.email', 'user.avatar'])
       .where('survey.id = :id', { id: surveyId })
       .getOne();
     let isShareEdit: boolean = false;

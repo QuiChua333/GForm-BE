@@ -15,7 +15,7 @@ import {
 
 import type { CustomDecorator } from '@nestjs/common';
 
-import { LocalAuthGuard } from '@/api/auth/guards';
+import { JwtAuthGuard, LocalAuthGuard } from '@/api/auth/guards';
 import { IS_PUBLIC_KEY, ROLES_KEY } from '@/utils/constants';
 
 import type { UserRole } from '@/common/enums';
@@ -39,7 +39,6 @@ export function UserRoles(roles: UserRole[]): CustomDecorator<string> {
 
 export function InjectRoute({
   path = '/',
-  roles = [],
   jwtSecure = true,
   localSecure = false,
   code = HttpStatus.OK,
@@ -54,12 +53,10 @@ export function InjectRoute({
 
   const decorators = [methodDecorator[method](path), HttpCode(code)];
 
-  if (roles.length > 0) {
-    decorators.push(UserRoles(roles));
-  }
-
   if (!jwtSecure) {
     decorators.push(Public());
+  } else {
+    decorators.push(UseGuards(JwtAuthGuard));
   }
 
   if (localSecure) {

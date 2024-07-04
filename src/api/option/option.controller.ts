@@ -10,59 +10,28 @@ import {
 } from '@nestjs/common';
 import { OptionService } from './option.service';
 import { Response } from 'express';
+import { InjectController, InjectRoute } from '@/decorators';
+import optionRoutes from './option.routes';
 
-@Controller('option')
+@InjectController({ name: optionRoutes.index })
 export class OptionController {
   constructor(private readonly optionService: OptionService) {}
 
-  @Patch('changeOption')
-  async changeOption(@Res() res: Response, @Body() body) {
-    try {
-      const response = await this.optionService.changeOption(body);
-      res.status(HttpStatus.OK).json({
-        message: 'Update survey successfully',
-        data: response,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
+  @InjectRoute(optionRoutes.changeOption)
+  async changeOption(@Body() body) {
+    const response = await this.optionService.changeOption(body);
+    return response;
   }
 
-  @Post('addOption')
-  async addOption(@Res() res: Response, @Body() body) {
-    try {
-      const response = await this.optionService.addOption(body);
-      res.status(HttpStatus.OK).json({
-        message: 'Update survey successfully',
-        data: response,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
+  @InjectRoute(optionRoutes.addOption)
+  async addOption(@Body() body) {
+    const response = await this.optionService.addOption(body);
+    return response;
   }
 
-  @Delete('deleteOption/:optionId')
-  async deleteOption(
-    @Res() res: Response,
-    @Param('optionId') optionId: string,
-  ) {
-    try {
-      const response = await this.optionService.deleteOption(optionId);
-      res.status(HttpStatus.OK).json({
-        message: 'Delete survey successfully',
-        data: response,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
+  @InjectRoute(optionRoutes.deleteOption)
+  async deleteOption(@Res() res: Response, @Param('id') optionId: string) {
+    const response = await this.optionService.deleteOption(optionId);
+    return response;
   }
 }

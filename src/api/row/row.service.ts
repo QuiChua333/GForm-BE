@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Row } from './Entity/row';
-import { Question } from '@/api/question/Entity/question.entity';
+import { Row } from './entities/row.entity';
+import { Question } from '@/api/question/entities/question.entity';
 
 @Injectable()
 export class RowService {

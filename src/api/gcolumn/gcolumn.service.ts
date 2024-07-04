@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GColumn } from './Entity/gcolumn';
-import { Question } from '@/api/question/Entity/question.entity';
+import { GColumn } from './entities/gcolumn.entity';
+import { Question } from '@/api/question/entities/question.entity';
 
 @Injectable()
 export class GColumnService {

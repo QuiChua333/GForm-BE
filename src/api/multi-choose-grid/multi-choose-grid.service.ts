@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MultiChooseGrid } from './Entity/multiChooseGrid';
+import { MultiChooseGrid } from './entities/multi-choose-grid.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()

@@ -6,19 +6,32 @@ import { User } from '@/api/user/entities';
 
 @Entity({ name: 'tokens' })
 export class Token extends BaseEntity {
-  @Column()
+  @Column({
+    name: 'verify_email_token',
+  })
   verifyEmailToken: string;
 
-  @Column()
+  @Column({
+    name: 'reset_password_token',
+    nullable: true,
+  })
   resetPasswordToken: string;
 
-  @Column({ nullable: true })
+  @Column({
+    name: 'access_token',
+    nullable: true,
+  })
   accessToken: string;
 
-  @Column({ nullable: true })
+  @Column({
+    name: 'refresh_token',
+    nullable: true,
+  })
   refreshToken: string;
 
   @OneToOne(() => User, (user) => user.token)
-  @JoinColumn()
+  @JoinColumn({
+    name: 'user_id',
+  })
   user: User;
 }

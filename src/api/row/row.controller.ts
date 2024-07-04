@@ -1,65 +1,27 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  HttpStatus,
-  Param,
-  Patch,
-  Post,
-  Res,
-} from '@nestjs/common';
+import { Body, Param } from '@nestjs/common';
 import { RowService } from './row.service';
-import { Response } from 'express';
+import { InjectController, InjectRoute } from '@/decorators';
+import rowRoutes from './row.routes';
 
-@Controller('row')
+@InjectController({ name: rowRoutes.index })
 export class RowController {
   constructor(private readonly rowService: RowService) {}
 
-  @Patch('changeRow')
-  async changeRow(@Res() res: Response, @Body() body) {
-    try {
-      const response = await this.rowService.changeRow(body);
-      res.status(HttpStatus.OK).json({
-        message: 'Update row successfully',
-        data: response,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
+  @InjectRoute(rowRoutes.changeRow)
+  async changeRow(@Body() body) {
+    const response = await this.rowService.changeRow(body);
+    return response;
   }
 
-  @Post('addRow')
-  async addRow(@Res() res: Response, @Body() body) {
-    try {
-      const response = await this.rowService.addRow(body);
-      res.status(HttpStatus.OK).json({
-        message: 'Update row successfully',
-        data: response,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
+  @InjectRoute(rowRoutes.addRow)
+  async addRow(@Body() body) {
+    const response = await this.rowService.addRow(body);
+    return response;
   }
 
-  @Delete('deleteRow/:rowId')
-  async deleteRow(@Res() res: Response, @Param('rowId') rowId: string) {
-    try {
-      const response = await this.rowService.deleteRow(rowId);
-      res.status(HttpStatus.OK).json({
-        message: 'Delete row successfully',
-        data: response,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
+  @InjectRoute(rowRoutes.deleteRow)
+  async deleteRow(@Param('id') rowId: string) {
+    const response = await this.rowService.deleteRow(rowId);
+    return response;
   }
 }

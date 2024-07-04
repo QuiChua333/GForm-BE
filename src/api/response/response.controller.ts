@@ -12,67 +12,38 @@ import {
 import { ResponseService } from './response.service';
 import { Response } from 'express';
 import { CreateResponseDTO } from './DTO/create-response.dto';
-import { MyJwtGuard } from '@/api/auth/guards/myjwt.guard';
+import { InjectController, InjectRoute, ReqUser } from '@/decorators';
+import responseRoutes from './response.routes';
 
-@Controller('response')
+@InjectController({ name: responseRoutes.index })
 export class ResponseController {
   constructor(private readonly responseService: ResponseService) {}
 
-  @Get()
-  welcome() {
-    return 'Welcome response';
+  @InjectRoute(responseRoutes.createResponse)
+  async createResponse(@Body() body: CreateResponseDTO) {
+    const newResponse = await this.responseService.createResponse(body);
+
+    return newResponse;
   }
 
-  @Post('/createResponse')
-  async createResponse(@Body() body: CreateResponseDTO, @Res() res: Response) {
-    try {
-      const newResponse = await this.responseService.createResponse(body);
-      res.status(HttpStatus.OK).json({
-        message: 'Create response successfully',
-        data: newResponse,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
+  @InjectRoute(responseRoutes.getResponseSurveyById)
+  async getResponseSurvey(@Param('id') surveyId: string, @ReqUser() reqUser) {
+    const { id: userId } = reqUser;
+    const newResponse = await this.responseService.getResponseSurvey(
+      surveyId,
+      userId,
+    );
+    return newResponse;
   }
 
-  @UseGuards(MyJwtGuard)
-  @Get('/getResponseSurvey/:id')
-  async getResponseSurvey(
+  @InjectRoute(responseRoutes.getDataToExportExcel)
+  async getDataToExportExcel(
     @Param('id') surveyId: string,
     @Res() res: Response,
-    @Req() req,
+    @ReqUser() reqUser,
   ) {
     try {
-      const { id: userId } = req.user;
-      const newResponse = await this.responseService.getResponseSurvey(
-        surveyId,
-        userId,
-      );
-      res.status(HttpStatus.OK).json({
-        message: 'Get response survey successfully',
-        data: newResponse,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
-  }
-
-  @UseGuards(MyJwtGuard)
-  @Get('dataExportResponse/:surveyId')
-  async getDataToExportExcel(
-    @Param('surveyId') surveyId: string,
-    @Res() res: Response,
-    @Req() req,
-  ) {
-    try {
-      const { id: userId } = req.user;
+      const { id: userId } = reqUser;
       const data = await this.responseService.getDataToExportExcel(
         surveyId,
         userId,

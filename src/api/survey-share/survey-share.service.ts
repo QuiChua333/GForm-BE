@@ -3,15 +3,16 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { SurveyShare } from './Entity/survey_share';
+import { SurveyShare } from './entities/survey-share.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ShareEmailDTO } from './DTO/share-email.dto';
-import { Survey } from '@/api/survey/Entity/survey.entity';
+import { Survey } from '@/api/survey/entities/survey.entity';
 import { User } from '@/api/user/entities/user.entity';
 import shareSurvey from 'src/utils/mailer/html_templates/shareSurvey';
 import { MailerService } from '@nestjs-modules/mailer';
 import { sendMail } from 'src/utils/mailer';
+import { EmailService } from '@/email/email.service';
 
 const LIMIT: number = 10;
 @Injectable()
@@ -24,7 +25,7 @@ export class SurveyShareService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
 
-    private readonly mailService: MailerService,
+    private emailService: EmailService,
   ) {}
 
   async shareWithEmail(body: ShareEmailDTO, userId: string) {
@@ -35,7 +36,7 @@ export class SurveyShareService {
       relations: ['owner'],
     });
     if (!survey) throw new BadRequestException('Survey does not exist');
-    if (survey.ownerId !== userId)
+    if (survey.ownerIdString !== userId)
       throw new BadRequestException('No permission');
     const existedsSurveyShare = await this.surveyShareRepository.findOne({
       where: {
@@ -59,18 +60,15 @@ export class SurveyShareService {
       surveyShare.user = user;
     }
 
-    const templateHTMLEmail = shareSurvey({
+    await this.emailService.sendMailShareSurvey({
       surveyTitle: survey.title,
+      ownerName: survey.owner.fullName,
+      email: body.email,
+      subject: body.title,
       message: body.message,
       linkEditSurvey: body.linkEditSurvey,
-      ownerName: survey.owner.fullName,
     });
-    // sendMail({
-    //   email: body.email,
-    //   subject: body.title,
-    //   html: templateHTMLEmail,
-    //   mailService: this.mailService,
-    // });
+
     const response = await this.surveyShareRepository.save(surveyShare);
     return {
       email: surveyShare.email,
@@ -102,7 +100,7 @@ export class SurveyShareService {
       .loadRelationCountAndMap('survey.questionsCount', 'survey.questions')
       .loadRelationCountAndMap('survey.responsesCount', 'survey.responses')
       .where('surveyShare.email = :email', { email: user.email })
-      .orderBy('survey.create_at', 'DESC')
+      .orderBy('survey.created_at', 'DESC')
       .skip(pageParam * LIMIT)
       .take(LIMIT);
 
@@ -130,8 +128,9 @@ export class SurveyShareService {
       });
     }
 
-    let surveys = await queryBuilder.getMany();
-    let sharedSurveys = surveys.map((surveyShare) => {
+    const surveys = await queryBuilder.getMany();
+
+    const sharedSurveys = surveys.map((surveyShare) => {
       return {
         id: surveyShare.survey.id,
         ownerName: surveyShare.survey.owner.fullName,
@@ -141,18 +140,22 @@ export class SurveyShareService {
         isAccepting: surveyShare.survey.isAccepting,
         questionsCount: surveyShare.survey['questionsCount'],
         responsesCount: surveyShare.survey['responsesCount'],
-        create_at: surveyShare.survey.create_at,
+        createdAt: surveyShare.survey.createdAt,
         isEdit: surveyShare.isEdit,
       };
     });
-    surveys.forEach(async (element) => {
-      if (!element.user) {
-        element.user = user;
-      }
-      element.isAccept = true;
-      await this.surveyShareRepository.save(element);
-    });
-    const totalSurveys = await queryBuilder.getCount();
+
+    await Promise.all(
+      surveys.map(async (element) => {
+        if (!element.user) {
+          element.user = user;
+        }
+        element.isAccept = true;
+        await this.surveyShareRepository.save(element);
+      }),
+    );
+
+    const totalSurveys = await totalQueryBuilder.getCount();
 
     const nextCursor =
       (pageParam + 1) * LIMIT < totalSurveys ? (pageParam + 1) * LIMIT : null;

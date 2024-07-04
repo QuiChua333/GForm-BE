@@ -1,127 +1,59 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpStatus,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Param, Query } from '@nestjs/common';
 import { SurveyShareService } from './survey-share.service';
 import { Response } from 'express';
 import { ShareEmailDTO } from './DTO/share-email.dto';
-import { MyJwtGuard } from '@/api/auth/guards/myjwt.guard';
+import { InjectController, InjectRoute, ReqUser } from '@/decorators';
+import surveyShareRoutes from './survey-share.routes';
 
-@Controller('survey-share')
+@InjectController({ name: surveyShareRoutes.index })
 export class SurveyShareController {
   constructor(private readonly surveyShareService: SurveyShareService) {}
 
-  @UseGuards(MyJwtGuard)
-  @Post('shareWithEmail')
-  async shareWithEmail(
-    @Res() res: Response,
-    @Body() body: ShareEmailDTO,
-    @Req() req,
-  ) {
-    try {
-      const { id: userId } = req.user;
-      const response = await this.surveyShareService.shareWithEmail(
-        body,
-        userId,
-      );
-      res.status(HttpStatus.OK).json({
-        message: 'Share successfully',
-        data: response,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
+  @InjectRoute(surveyShareRoutes.shareWithEmail)
+  async shareWithEmail(@Body() body: ShareEmailDTO, @ReqUser() reqUser) {
+    const { id: userId } = reqUser;
+    const response = await this.surveyShareService.shareWithEmail(body, userId);
+    return response;
   }
 
-  @UseGuards(MyJwtGuard)
-  @Get('getSharedSurveysOfCurrentUser')
-  async getSharedSurveysOfCurrentUser(
-    @Req() req,
-    @Res() res: Response,
-    @Query() query,
-  ) {
-    try {
-      const userId = req.user.id;
-      const data = await this.surveyShareService.getSharedSurveysOfCurrentUser(
-        userId,
-        query,
-      );
-      res.status(HttpStatus.OK).json({
-        message: 'Get current survey successfully',
-        data: data,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message,
-      });
-    }
+  @InjectRoute(surveyShareRoutes.getSharedSurveysOfCurrentUser)
+  async getSharedSurveysOfCurrentUser(@ReqUser() reqUser, @Query() query) {
+    const userId = reqUser.id;
+    const data = await this.surveyShareService.getSharedSurveysOfCurrentUser(
+      userId,
+      query,
+    );
+    return data;
   }
 
-  @UseGuards(MyJwtGuard)
-  @Patch(':id/changeEditSharedUser')
+  @InjectRoute(surveyShareRoutes.changeEditSharedUser)
   async changeEditSharedUser(
-    @Res() res: Response,
     @Body() body: { isEdit: boolean; surveyId: string },
-    @Req() req,
+    @ReqUser() reqUser,
     @Param('id') sharedId: string,
   ) {
-    try {
-      const { id: userId } = req.user;
-      const response = await this.surveyShareService.changeEditSharedUser(
-        sharedId,
-        userId,
-        body,
-      );
-      res.status(HttpStatus.OK).json({
-        message: 'Edit shared user successfully',
-        data: response,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(error.status).json({
-        message: error.message,
-      });
-    }
+    const { id: userId } = reqUser;
+    const response = await this.surveyShareService.changeEditSharedUser(
+      sharedId,
+      userId,
+      body,
+    );
+
+    return response;
   }
 
-  @UseGuards(MyJwtGuard)
-  @Delete('survey/:surveyId/deleteSharedSurvey/:sharedId')
+  @InjectRoute(surveyShareRoutes.deleteSharedSurvey)
   async deleteSharedSurvey(
-    @Res() res: Response,
-    @Req() req,
+    @ReqUser() reqUser,
     @Param('surveyId') surveyId: string,
     @Param('sharedId') sharedId: string,
   ) {
-    try {
-      const { id: userId } = req.user;
-      const response = await this.surveyShareService.deleteSharedSurvey(
-        sharedId,
-        userId,
-        surveyId,
-      );
-      res.status(HttpStatus.OK).json({
-        message: 'Delete shared user successfully',
-        data: response,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(error.status).json({
-        message: error.message,
-      });
-    }
+    const { id: userId } = reqUser;
+    const response = await this.surveyShareService.deleteSharedSurvey(
+      sharedId,
+      userId,
+      surveyId,
+    );
+    return response;
   }
 }

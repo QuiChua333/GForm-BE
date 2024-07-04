@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Option } from './Entity/option.entity';
-import { Question } from '@/api/question/Entity/question.entity';
+import { Option } from './entities/option.entity';
+import { Question } from '@/api/question/entities/question.entity';
 
 @Injectable()
 export class OptionService {

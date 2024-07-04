@@ -11,7 +11,7 @@ import authRoutes from './auth.routes';
 import { UpdatedUserDTO } from '../user/dto';
 import { ITokenAuthentication } from '../token/token.interface';
 
-@InjectController({ name: 'auth' })
+@InjectController({ name: authRoutes.index })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -60,11 +60,11 @@ export class AuthController {
 
   @InjectRoute(authRoutes.resetPassword)
   async resetPassword(
-    @Param('email') email: string,
+    @Param('resetPasswordToken') resetPasswordToken: string,
     @Body() body: { password: string },
   ): Promise<UpdatedUserDTO> {
     const updatedUserDTO = await this.authService.resetPassword({
-      email,
+      resetPasswordToken,
       password: body.password,
     });
     return updatedUserDTO;

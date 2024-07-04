@@ -4,6 +4,7 @@ import { emailVerification } from './templates';
 import { MailerService } from '@nestjs-modules/mailer';
 import { IEMailObject } from './email.interface';
 import resetPassword from './templates/resetPassword.template';
+import shareSurvey from './templates/shareSurvey.template';
 
 @Injectable()
 export class EmailService {
@@ -48,20 +49,52 @@ export class EmailService {
     });
   }
 
+  public async sendMailShareSurvey({
+    surveyTitle,
+    ownerName,
+    email,
+    subject,
+    message,
+    linkEditSurvey,
+  }: {
+    surveyTitle: string;
+    ownerName: string;
+    email: string;
+    subject: string;
+    message: string;
+    linkEditSurvey: string;
+  }) {
+    const shareSurveyTemplate = shareSurvey({
+      surveyTitle,
+      message,
+      linkEditSurvey,
+      ownerName,
+    });
+
+    await this.sendMail({
+      email,
+      subject: subject,
+      useHTML: true,
+      html: shareSurveyTemplate,
+    });
+  }
+
   private async sendMail(mailObject: IEMailObject) {
     const { email, subject, text, html, useHTML } = mailObject;
 
     if (useHTML) {
       await this.mailService.sendMail({
-        to: email,
-        subject: subject,
-        text: text,
-      });
-    } else {
-      await this.mailService.sendMail({
+        from: `"GForm" <${process.env.MAIL_USERNAME}>`,
         to: email,
         subject: subject,
         html: html,
+      });
+    } else {
+      await this.mailService.sendMail({
+        from: `"GForm" <${process.env.MAIL_USERNAME}>`,
+        to: email,
+        subject: subject,
+        text: text,
       });
     }
   }

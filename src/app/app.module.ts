@@ -14,7 +14,7 @@ import { SurveyModule } from '@/api/survey/survey.module';
 import { QuestionModule } from '@/api/question/question.module';
 import { OptionModule } from '@/api/option/option.module';
 import { ValidationnModule } from '@/api/validation/validation.module';
-import { LinearScaleModule } from '@/api/linear_scale/linear_scale.module';
+import { LinearScaleModule } from '@/api/linear-scale/linear-scale.module';
 import { RowModule } from '@/api/row/row.module';
 import { GColumnModule } from '@/api/gcolumn/gcolumn.module';
 import { ResponseModule } from '@/api/response/response.module';

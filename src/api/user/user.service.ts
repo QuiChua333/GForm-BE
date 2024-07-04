@@ -55,8 +55,10 @@ export class UserService {
     userId: string,
     data: UpdateUserDTO,
   ): Promise<UpdatedUserDTO> {
-    await this.userRepository.update(userId, data);
+    console.log(userId, data);
+    await this.userRepository.update({ id: userId }, data);
     const updatedUser = await this.userRepository.findOneBy({ id: userId });
+
     return updatedUser.toResponse();
   }
 

@@ -58,7 +58,6 @@ export class AuthService {
 
     const payload: ITokenPayload = {
       email: registerUser.email,
-      id: user.id,
     };
     const verifyEmailToken = await this.jwtService.signAsync(payload, {
       expiresIn: this.configService.get('token.verifyEmail.lifetime') / 1000,
@@ -78,22 +77,17 @@ export class AuthService {
 
   async verifyEmail(verifyEmailToken: string): Promise<UpdatedUserDTO> {
     const payload = await this.jwtService.verifyAsync(verifyEmailToken);
+    const user = await this.userService.findOneByEmail(payload.email);
 
-    const token = await this.tokenService.findOneBy({
-      user: {
-        id: payload.id,
-      },
-    });
-
-    if (!token.verifyEmailToken) {
-      throw new NotFoundException('Url not found');
+    if (user.isVerifiedEmail) {
+      return user.toResponse();
     }
 
-    const updatedUser = await this.userService.updateUserById(payload.id, {
+    const updatedUser = await this.userService.updateUserById(user.id, {
       isVerifiedEmail: true,
     });
 
-    await this.tokenService.updateByUserId(payload.id, {
+    await this.tokenService.updateByUserId(user.id, {
       verifyEmailToken: '',
     });
 
@@ -208,17 +202,20 @@ export class AuthService {
   async resetPassword(
     resetPasswordData: ResetPasswordDTO,
   ): Promise<UpdatedUserDTO> {
-    const user = await this.userService.findOneByEmail(resetPasswordData.email);
+    const { email, id } = await this.jwtService.verifyAsync(
+      resetPasswordData.resetPasswordToken,
+    );
+    const user = await this.userService.findOneByEmail(email);
     if (!user) throw new NotFoundException('User not found');
     const updatedUser = await this.userService.updateUserById(user.id, {
       password: resetPasswordData.password,
     });
 
-    const payload: ITokenPayload = {
-      email: user.email,
-      id: user.id,
+    const newPayload: ITokenPayload = {
+      email,
+      id,
     };
-    const resultTokens = await this.generateToken(payload);
+    const resultTokens = await this.generateToken(newPayload);
 
     await this.tokenService.updateByUserId(updatedUser.id, {
       ...resultTokens,

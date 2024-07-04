@@ -4,19 +4,19 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Response } from './Entity/response';
+import { Response } from './entities/response.entity';
 import { Repository } from 'typeorm';
 import { CreateResponseDTO } from './DTO/create-response.dto';
-import { Answer } from '@/api/answer/Entity/answer';
-import { MultiChooseOption } from '@/api/multi-choose-option/Entity/multiChooseOption';
-import { MultiChooseGrid } from '@/api/multi-choose-grid/Entity/multiChooseGrid';
-import { Question } from '@/api/question/Entity/question.entity';
-import { Survey } from '@/api/survey/Entity/survey.entity';
+import { Answer } from '../answer/entities';
+import { MultiChooseOption } from '../multi-choose-option/entities';
+import { MultiChooseGrid } from '../multi-choose-grid/entities';
+import { Question } from '../question/entities';
+import { Survey } from '@/api/survey/entities';
 import QuestionResponseInterface from 'src/utils/interface/questionResponseInterface';
-import { User } from '@/api/user/entities/user.entity';
 import QuestionType from 'src/utils/interface/questionType';
 import * as ExcelJs from 'exceljs';
 import * as moment from 'moment';
+import { User } from '../user/entities';
 
 @Injectable()
 export class ResponseService {
@@ -167,7 +167,7 @@ export class ResponseService {
       const questionResponse: QuestionResponseInterface = {
         questionId: question.id,
         questionContent: question.question,
-        questionType: question.questionType,
+        questionType: QuestionType[QuestionType[question.questionType]],
         textResponses: [],
         optionReponses: [],
         rowGColumnResponses: [],
@@ -287,15 +287,15 @@ export class ResponseService {
         previousQuestionId: '',
       },
       order: {
-        create_at: 'ASC',
+        createdAt: 'ASC',
         options: {
-          create_at: 'ASC',
+          createdAt: 'ASC',
         },
         rows: {
-          create_at: 'ASC',
+          createdAt: 'ASC',
         },
         gcolumns: {
-          create_at: 'ASC',
+          createdAt: 'ASC',
         },
       },
     });
@@ -306,15 +306,15 @@ export class ResponseService {
         firstQuestion = await this.questionRepository.findOne({
           where: { id: firstQuestion.nextQuestionId },
           order: {
-            create_at: 'ASC',
+            createdAt: 'ASC',
             options: {
-              create_at: 'ASC',
+              createdAt: 'ASC',
             },
             rows: {
-              create_at: 'ASC',
+              createdAt: 'ASC',
             },
             gcolumns: {
-              create_at: 'ASC',
+              createdAt: 'ASC',
             },
           },
         });

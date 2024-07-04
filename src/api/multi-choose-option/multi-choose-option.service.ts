@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MultiChooseOption } from './Entity/multiChooseOption';
+import { MultiChooseOption } from './entities/multi-choose-option.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 

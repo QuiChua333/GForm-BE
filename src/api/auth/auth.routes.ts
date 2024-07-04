@@ -47,7 +47,7 @@ export default {
   },
 
   resetPassword: <IRouteParams>{
-    path: '/reset-password/:email',
+    path: '/reset-password/:resetPasswordToken',
     jwtSecure: false,
     code: HttpStatus.OK,
     method: RequestMethod.PUT,

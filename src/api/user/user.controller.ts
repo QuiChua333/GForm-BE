@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -9,6 +10,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { InjectRoute, ReqUser } from '@/decorators';
 import userRoutes from './user.routes';
+import { JwtAuthGuard } from '../auth/guards';
 
 @Controller('user')
 export class UserController {

@@ -12,5 +12,5 @@ export interface IValidateJwtUserParams {
 
 export interface ITokenPayload {
   email: string;
-  id: string;
+  id?: string;
 }
