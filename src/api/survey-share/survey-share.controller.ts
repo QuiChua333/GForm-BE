@@ -1,6 +1,5 @@
 import { Body, Param, Query } from '@nestjs/common';
 import { SurveyShareService } from './survey-share.service';
-import { Response } from 'express';
 import { ShareEmailDTO } from './DTO/share-email.dto';
 import { InjectController, InjectRoute, ReqUser } from '@/decorators';
 import surveyShareRoutes from './survey-share.routes';

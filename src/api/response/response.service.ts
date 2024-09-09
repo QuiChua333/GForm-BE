@@ -180,8 +180,10 @@ export class ResponseService {
         // Lấy tất cả các otherText từ các câu trả lời
         const otherTexts = await this.answerRepository
           .createQueryBuilder('answer')
-          .select('DISTINCT answer.otherText', 'otherText')
-          .where('answer.questionId = :questionId', { questionId: question.id })
+          .select('DISTINCT answer.other_text', 'otherText')
+          .where('answer.question_id = :questionId', {
+            questionId: question.id,
+          })
           .andWhere('answer.isChooseOther = true')
           .getRawMany();
 
